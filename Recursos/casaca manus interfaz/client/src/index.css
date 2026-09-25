@@ -1,0 +1,47 @@
+/* Global reset and legacy containment */
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    min-width: 320px;
+    background: #f4f0e8;
+    color: #151515;
+    font-family: Manrope, Arial, sans-serif;
+  }
+  body.locked { overflow: hidden; }
+}
+
+/* El modal de producto de la V1.1.0 debe permanecer oculto por defecto */
+#productModal.product-modal {
+  display: none !important;
+}
+
+#productModal.product-modal.open {
+  display: flex !important;
+}
+
+#searchOverlay.search-overlay {
+  display: none !important;
+}
+
+#searchOverlay.search-overlay.open {
+  display: block !important;
+}
+
+#cartDrawer.cart-drawer {
+  transform: translateX(100%) !important;
+  display: flex !important;
+}
+
+#cartDrawer.cart-drawer.open {
+  transform: none !important;
+}
+
+.backdrop {
+  display: none !important;
+}
+
+.backdrop.open {
+  display: block !important;
+}

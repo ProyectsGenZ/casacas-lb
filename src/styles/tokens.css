@@ -1,0 +1,53 @@
+:root {
+  /* Brand Color Tokens */
+  --color-bg-primary: #0E0E0E;
+  --color-bg-secondary: #161616;
+  --color-bg-tertiary: #1F1F1F;
+  --color-surface-card: #151515;
+  --color-surface-hover: #222222;
+
+  --color-light-bg: #F8F7F4;
+  --color-light-surface: #EFECE6;
+  --color-light-border: #DCD8CF;
+  --color-light-text: #141414;
+  --color-light-muted: #6B6861;
+
+  --color-text-primary: #F8F7F4;
+  --color-text-secondary: #9E9D99;
+  --color-text-muted: #666562;
+  --color-text-inverse: #121212;
+
+  --color-accent: #C85A32; /* Terracota cálido editorial */
+  --color-accent-hover: #DF683B;
+  --color-accent-subtle: rgba(200, 90, 50, 0.12);
+  --color-accent-contrast: #FFFFFF;
+
+  --color-border: #262626;
+  --color-border-subtle: #1F1F1F;
+  --color-border-active: #404040;
+
+  --color-success: #2E7D32;
+  --color-warning: #ED6C02;
+  --color-error: #D32F2F;
+
+  /* Typography */
+  --font-display: 'Syne', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Space Grotesk', monospace;
+
+  /* Radii - Sharp and contemporary */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Shadows */
+  --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --shadow-drawer: -10px 0 40px rgba(0, 0, 0, 0.7);
+}
