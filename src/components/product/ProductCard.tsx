@@ -4,7 +4,7 @@ import { useUI } from '../../context/UIContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { brandConfig } from '../../config/brandConfig';
-import { Heart, Plus, Check, Sparkles } from 'lucide-react';
+import { Heart, Plus, Check, Sparkles, Flame } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 interface ProductCardProps {
@@ -71,9 +71,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <Badge variant="dark" className="font-mono text-[10px]">
             {product.sku}
           </Badge>
+          {product.offer?.active && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[#C8102E] text-white rounded-[2px] shadow-md shadow-[#C8102E]/30">
+              <Flame className="w-2.5 h-2.5 fill-current" />
+              {product.offer.badgeText || (product.offer.type === 'discount_percent' ? `${product.offer.discountPercent}% OFF` : 'OFERTA')}
+            </span>
+          )}
           {product.customizable && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[#C8102E] text-white rounded-[2px]">
-              <Sparkles className="w-2.5 h-2.5" />
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[#1C1C1C] text-[#DDD] border border-[#333] rounded-[2px]">
+              <Sparkles className="w-2.5 h-2.5 text-[#C8102E]" />
               Personalizable
             </span>
           )}
@@ -149,9 +155,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Pricing */}
         <div className="pt-2 border-t border-[#1C1C1C]">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="font-bold text-base sm:text-lg text-[#F8F7F4]">
-              {formatMoney(product.priceBase)}
-            </span>
+            {product.originalPrice && product.originalPrice > product.price ? (
+              <>
+                <span className="font-bold text-base sm:text-lg text-[#F8F7F4]">
+                  {formatMoney(product.price)}
+                </span>
+                <span className="line-through text-xs text-[#7A7873]">
+                  {formatMoney(product.originalPrice)}
+                </span>
+              </>
+            ) : (
+              <span className="font-bold text-base sm:text-lg text-[#F8F7F4]">
+                {formatMoney(product.price)}
+              </span>
+            )}
             {product.priceCustom && (
               <span className="text-[11px] text-[#A09D96]">
                 / {formatMoney(product.priceCustom)} <span className="text-[#C8102E] font-medium">personaliz.</span>
@@ -159,7 +176,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             )}
           </div>
           <p className="text-[11px] text-[#8E8B84] font-medium mt-0.5">
-            {brandConfig.installmentsCount} cuotas de {formatMoney(installmentAmount)}
+            {brandConfig.installmentsCount} cuotas de {formatMoney(Math.round(product.price / brandConfig.installmentsCount))}
           </p>
         </div>
 

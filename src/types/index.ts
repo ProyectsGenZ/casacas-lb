@@ -18,12 +18,22 @@ export interface SizeMeasurement {
   waist?: number;
 }
 
+export type OfferType = 'none' | 'discount_percent' | '2x1' | 'free_customization' | 'sale_price' | 'custom_badge';
+
+export interface ProductOffer {
+  active: boolean;
+  type: OfferType;
+  discountPercent?: number; // e.g., 10 for 10%
+  salePrice?: number;
+  badgeText?: string;
+}
+
 export interface Product {
   id: string;
   numericId: number;
   name: string;
   category: ProductCategory;
-  price: number; // priceBase
+  price: number; // priceBase or discounted price
   priceBase: number;
   priceCustom: number | null;
   minQuantity: number;
@@ -32,6 +42,7 @@ export interface Product {
   shortDescription: string;
   description: string;
   originalPrice?: number;
+  offer?: ProductOffer;
   tag?: 'Nuevo' | 'Más vendido' | 'Personalizable' | 'Para Equipos';
   fit?: string;
   material?: string;
@@ -76,3 +87,18 @@ export interface FilterState {
 }
 
 export type ActiveView = 'home' | 'catalog' | 'product-detail' | 'admin-login' | 'admin-dashboard';
+
+export interface CustomerReview {
+  id: string;
+  author: string;
+  origin?: string;
+  stars: number;
+  text: string;
+  image?: string; // foto de la prenda comprada
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  isAnonymous?: boolean;
+  userEmail?: string;
+  userPhoto?: string;
+  featured?: boolean;
+}

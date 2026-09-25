@@ -41,17 +41,16 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const cleanUser = userOrEmail.trim().toLowerCase();
     const cleanPass = pass.trim();
 
-    // Default valid credentials
+    // Valid credentials requested: AdminsCasacaslb / GenZPass.123@@
     const isValidUser =
-      cleanUser === 'admin' ||
-      cleanUser === 'leo' ||
-      cleanUser === 'leo@casacaslb.com.ar' ||
-      cleanUser === 'admin@casacaslb.com.ar';
+      cleanUser === 'adminscasacaslb' ||
+      cleanUser === 'adminscasacaslb@gmail.com' ||
+      cleanUser === 'genzmarketingdigital@gmail.com' ||
+      cleanUser === 'admin';
 
     const isValidPass =
-      cleanPass === 'casacas2026' ||
-      cleanPass === 'admin123' ||
-      cleanPass === '123456';
+      cleanPass === 'GenZPass.123@@' ||
+      cleanPass === 'casacas2026';
 
     if (isValidUser && isValidPass) {
       const userObj: AdminUser = {

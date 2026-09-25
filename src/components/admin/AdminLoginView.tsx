@@ -33,8 +33,8 @@ export const AdminLoginView: React.FC = () => {
   };
 
   const handleFillDemo = () => {
-    setUsername('admin');
-    setPassword('casacas2026');
+    setUsername('AdminsCasacaslb');
+    setPassword('GenZPass.123@@');
     setError(null);
   };
 
@@ -152,7 +152,7 @@ export const AdminLoginView: React.FC = () => {
             onClick={handleFillDemo}
             className="text-xs text-[#C8102E] hover:text-[#E01837] font-semibold underline underline-offset-4 cursor-pointer transition-colors"
           >
-            Rellenar con: admin / casacas2026
+            Rellenar con: AdminsCasacaslb / GenZPass.123@@
           </button>
         </div>
 

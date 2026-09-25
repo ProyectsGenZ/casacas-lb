@@ -7,6 +7,7 @@ import { AdminAuthProvider, useAdminAuth } from './context/AdminAuthContext';
 import { brandConfig } from './config/brandConfig';
 
 import { StoreSettingsProvider, useStoreSettings } from './context/StoreSettingsContext';
+import { ReviewsProvider } from './context/ReviewsContext';
 
 // Layout
 import { AnnouncementBar } from './components/layout/AnnouncementBar';
@@ -148,13 +149,15 @@ export default function App() {
     <UIProvider>
       <StoreSettingsProvider>
         <ProductManagementProvider>
-          <AdminAuthProvider>
-            <CartProvider>
-              <WishlistProvider>
-                <AppContent />
-              </WishlistProvider>
-            </CartProvider>
-          </AdminAuthProvider>
+          <ReviewsProvider>
+            <AdminAuthProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <AppContent />
+                </WishlistProvider>
+              </CartProvider>
+            </AdminAuthProvider>
+          </ReviewsProvider>
         </ProductManagementProvider>
       </StoreSettingsProvider>
     </UIProvider>

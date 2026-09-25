@@ -49,12 +49,6 @@ const heroSlides = [
 export const Hero: React.FC = () => {
   const { navigateToCatalog } = useUI();
   const { settings } = useStoreSettings();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const startXRef = useRef(0);
-  const currentDragOffsetRef = useRef(0);
-  const wasDraggedRef = useRef(false);
 
   const slides = settings.hero?.slides && settings.hero.slides.length > 0
     ? settings.hero.slides.map((s) => ({
@@ -73,16 +67,82 @@ export const Hero: React.FC = () => {
       }))
     : heroSlides;
 
-  // Auto-play timer that pauses while dragging
+  const count = slides.length;
+  // Extended array with clones: [last, ...slides, first]
+  const extendedSlides = count > 1
+    ? [slides[count - 1], ...slides, slides[0]]
+    : slides;
+
+  const [trackIndex, setTrackIndex] = useState(count > 1 ? 1 : 0);
+  const [withTransition, setWithTransition] = useState(true);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startXRef = useRef(0);
+  const currentDragOffsetRef = useRef(0);
+  const wasDraggedRef = useRef(false);
+  const isTransitioningRef = useRef(false);
+
+  // Active logical slide index (0 to count - 1)
+  const activeSlideIndex = count > 1 ? (trackIndex - 1 + count) % count : 0;
+  const slide = slides[activeSlideIndex] || slides[0];
+
+  const nextSlide = () => {
+    if (count <= 1 || isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    setWithTransition(true);
+    setTrackIndex((prev) => prev + 1);
+  };
+
+  const prevSlide = () => {
+    if (count <= 1 || isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    setWithTransition(true);
+    setTrackIndex((prev) => prev - 1);
+  };
+
+  const goToSlide = (idx: number) => {
+    if (count <= 1 || isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    setWithTransition(true);
+    setTrackIndex(idx + 1);
+  };
+
+  // Seamless jump without reverse animation on clone boundary
+  const handleTransitionEnd = () => {
+    isTransitioningRef.current = false;
+    if (count <= 1) return;
+
+    if (trackIndex === count + 1) {
+      // Reached the clone of slide 1 at end -> jump silently to real slide 1
+      setWithTransition(false);
+      setTrackIndex(1);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setWithTransition(true);
+        });
+      });
+    } else if (trackIndex === 0) {
+      // Reached the clone of last slide at start -> jump silently to real last slide
+      setWithTransition(false);
+      setTrackIndex(count);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setWithTransition(true);
+        });
+      });
+    }
+  };
+
+  // Auto-play timer
   useEffect(() => {
-    if (isDragging) return;
+    if (isDragging || count <= 1) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      nextSlide();
     }, 6000);
     return () => clearInterval(timer);
-  }, [isDragging, currentSlide, slides.length]);
+  }, [isDragging, count, trackIndex]);
 
-  // Drag & Swipe event handlers (mouse and touch)
+  // Drag & Swipe event handlers
   const handleDragStart = (clientX: number) => {
     setIsDragging(true);
     startXRef.current = clientX;
@@ -103,22 +163,18 @@ export const Hero: React.FC = () => {
   const handleDragEnd = () => {
     if (!isDragging) return;
     const deltaX = currentDragOffsetRef.current;
-    const threshold = 60; // Pixels required to switch slide
+    const threshold = 50;
 
     if (deltaX < -threshold) {
-      // Swiped left -> Next slide
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      nextSlide();
     } else if (deltaX > threshold) {
-      // Swiped right -> Previous slide
-      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+      prevSlide();
     }
 
     setIsDragging(false);
     setDragOffset(0);
     currentDragOffsetRef.current = 0;
   };
-
-  const slide = slides[currentSlide];
 
   return (
     <>
@@ -135,16 +191,17 @@ export const Hero: React.FC = () => {
         onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
         onTouchEnd={handleDragEnd}
       >
-        {/* Background Editorial Images Track with Real-Time Drag Translation */}
+        {/* Background Editorial Images Track with Real Infinite Loop */}
         <div
           className="absolute inset-0 z-0 flex h-full pointer-events-none"
+          onTransitionEnd={handleTransitionEnd}
           style={{
-            transform: `translateX(calc(-${currentSlide * 100}% + ${dragOffset}px))`,
-            transition: isDragging ? 'none' : 'transform 550ms cubic-bezier(0.16, 1, 0.3, 1)',
+            transform: `translateX(calc(-${trackIndex * 100}% + ${dragOffset}px))`,
+            transition: isDragging || !withTransition ? 'none' : 'transform 650ms cubic-bezier(0.16, 1, 0.3, 1)',
             willChange: 'transform'
           }}
         >
-          {slides.map((s, idx) => (
+          {extendedSlides.map((s, idx) => (
             <div key={idx} className="relative w-full h-full flex-shrink-0 overflow-hidden">
               <img
                 src={s.image}
@@ -228,7 +285,7 @@ export const Hero: React.FC = () => {
               </div>
               <div className="hidden sm:flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#C8102E] shrink-0"></span>
-                <span>Envíos a todo el país</span>
+                <span>{settings.shipping?.deliveryEnabled ? 'Envíos a todo el país' : 'Retiro en local Las Breñas'}</span>
               </div>
             </div>
 
@@ -240,7 +297,7 @@ export const Hero: React.FC = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setCurrentSlide((c) => (c - 1 + heroSlides.length) % heroSlides.length);
+                  prevSlide();
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 className="w-10 h-10 rounded-[2px] bg-[#1A1A1A]/80 border border-[#333] hover:border-[#666] text-white flex items-center justify-center transition-colors focus-ring cursor-pointer"
@@ -251,7 +308,7 @@ export const Hero: React.FC = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setCurrentSlide((c) => (c + 1) % heroSlides.length);
+                  nextSlide();
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 className="w-10 h-10 rounded-[2px] bg-[#1A1A1A]/80 border border-[#333] hover:border-[#666] text-white flex items-center justify-center transition-colors focus-ring cursor-pointer"
@@ -262,16 +319,16 @@ export const Hero: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              {heroSlides.map((_, idx) => (
+              {slides.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setCurrentSlide(idx);
+                    goToSlide(idx);
                   }}
                   onMouseDown={(e) => e.stopPropagation()}
                   className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                    idx === currentSlide ? 'w-8 bg-[#C8102E]' : 'w-2 bg-[#555] hover:bg-[#888]'
+                    idx === activeSlideIndex ? 'w-8 bg-[#C8102E]' : 'w-2 bg-[#555] hover:bg-[#888]'
                   }`}
                   aria-label={`Ir al slide ${idx + 1}`}
                 />

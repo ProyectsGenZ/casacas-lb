@@ -6,6 +6,8 @@ import { Product, ProductCategory } from '../../types';
 import { ProductFormModal } from './ProductFormModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { StoreSettingsTab } from './StoreSettingsTab';
+import { AdminReviewsTab } from './AdminReviewsTab';
+import { useReviews } from '../../context/ReviewsContext';
 import {
   Package,
   Plus,
@@ -21,7 +23,8 @@ import {
   Sparkles,
   ArrowUpDown,
   Filter,
-  Store
+  Store,
+  Star
 } from 'lucide-react';
 import { brandConfig } from '../../config/brandConfig';
 
@@ -29,9 +32,10 @@ export const AdminDashboardView: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct, updateStock, resetToDefault } = useProductManagement();
   const { logout, adminUser } = useAdminAuth();
   const { navigateToHome, showToast } = useUI();
+  const { pendingReviews } = useReviews();
 
-  // Main Tab State (Products vs CMS Store Settings)
-  const [mainTab, setMainTab] = useState<'products' | 'cms'>('products');
+  // Main Tab State (Products vs CMS Store Settings vs Reviews Moderation)
+  const [mainTab, setMainTab] = useState<'products' | 'cms' | 'reviews'>('products');
 
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -196,10 +200,29 @@ export const AdminDashboardView: React.FC = () => {
             <Store className="w-4 h-4" />
             <span>Personalización y Contenido (CMS)</span>
           </button>
+
+          <button
+            onClick={() => setMainTab('reviews')}
+            className={`px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-[2px] transition-all flex items-center gap-2 cursor-pointer relative ${
+              mainTab === 'reviews'
+                ? 'bg-[#C8102E] text-white shadow-lg shadow-[#C8102E]/20'
+                : 'bg-[#181818] text-[#888] hover:text-white hover:bg-[#222]'
+            }`}
+          >
+            <Star className="w-4 h-4" />
+            <span>Moderación de Reseñas</span>
+            {pendingReviews.length > 0 && (
+              <span className="px-1.5 py-0.5 bg-amber-400 text-black text-[10px] font-black rounded-full leading-none">
+                {pendingReviews.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {mainTab === 'cms' ? (
           <StoreSettingsTab />
+        ) : mainTab === 'reviews' ? (
+          <AdminReviewsTab />
         ) : (
           <>
             {/* Header Title & Quick Action */}

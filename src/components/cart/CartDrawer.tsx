@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
 import { brandConfig } from '../../config/brandConfig';
-import { X, Trash2, Plus, Minus, ArrowRight, Truck, Tag, ShoppingBag, Check } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ArrowRight, Truck, Tag, ShoppingBag, Check, MapPin } from 'lucide-react';
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -19,7 +19,9 @@ export const CartDrawer: React.FC = () => {
     remainingForFreeShipping,
     couponCode,
     applyCoupon,
-    removeCoupon
+    removeCoupon,
+    deliveryEnabled,
+    pickupOnlyMessage
   } = useCart();
 
   const { navigateToCatalog, showToast } = useUI();
@@ -63,7 +65,11 @@ export const CartDrawer: React.FC = () => {
       .map((item) => `- ${item.quantity}x ${item.product.name} (Talle: ${item.selectedSize}, Color: ${item.selectedColor.name}) = ${formatPrice(item.product.price * item.quantity)}`)
       .join('\n');
     
-    const message = `*NUEVO PEDIDO DESDE LA TIENDA WEB - ${brandConfig.name}*\n\n*Detalle de prendas:*\n${itemsSummary}\n\n*Subtotal:* ${formatPrice(subtotal)}${discountAmount > 0 ? `\n*Descuento cupón:* -${formatPrice(discountAmount)}` : ''}\n*Costo de envío:* ${shippingCost === 0 ? 'GRATIS' : formatPrice(shippingCost)}\n*TOTAL FINAL:* ${formatPrice(total)}\n\n¿Cómo continuamos con el pago y la entrega?`;
+    const shippingText = !deliveryEnabled
+      ? '*Modalidad de entrega:* Retiro en el local comercial (Las Breñas, Chaco) - GRATIS'
+      : `*Costo de envío:* ${shippingCost === 0 ? 'GRATIS' : formatPrice(shippingCost)}`;
+
+    const message = `*NUEVO PEDIDO DESDE LA TIENDA WEB - ${brandConfig.name}*\n\n*Detalle de prendas:*\n${itemsSummary}\n\n*Subtotal:* ${formatPrice(subtotal)}${discountAmount > 0 ? `\n*Descuento cupón:* -${formatPrice(discountAmount)}` : ''}\n${shippingText}\n*TOTAL FINAL:* ${formatPrice(total)}\n\n¿Cómo continuamos con el pago y la entrega?`;
 
     const waUrl = `https://wa.me/${brandConfig.contact.whatsapp}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, '_blank');
@@ -89,7 +95,7 @@ export const CartDrawer: React.FC = () => {
         <div className="p-5 border-b border-[#202020]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-[#C85A32]" />
+              <ShoppingBag className="w-5 h-5 text-[#C8102E]" />
               <h2 className="font-display font-bold text-lg text-[#F8F7F4] uppercase tracking-wide">
                 Tu Carrito ({cart.length})
               </h2>
@@ -103,32 +109,47 @@ export const CartDrawer: React.FC = () => {
             </button>
           </div>
 
-          {/* Free Shipping Progress Bar */}
-          <div className="mt-4 p-3 bg-[#181818] border border-[#262626] rounded-[2px]">
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="flex items-center gap-1.5 text-[#E0DDD5] font-medium">
-                <Truck className="w-3.5 h-3.5 text-[#C85A32]" />
-                {remainingForFreeShipping === 0 ? (
-                  <strong className="text-[#4CAF50]">¡Tenés ENVÍO GRATIS a todo el país!</strong>
-                ) : (
-                  <span>
-                    Te faltan <strong className="text-white">{formatPrice(remainingForFreeShipping)}</strong> para envío gratis
-                  </span>
-                )}
-              </span>
-              <span className="font-mono text-[11px] text-[#A09D96]">
-                {freeShippingProgress}%
-              </span>
+          {/* Shipping or Local Pickup Notice */}
+          {!deliveryEnabled ? (
+            <div className="mt-4 p-3 bg-[#181818] border border-[#2D2D2D] rounded-[2px] flex items-start gap-2.5">
+              <MapPin className="w-4 h-4 text-[#C8102E] shrink-0 mt-0.5" />
+              <div className="text-xs text-[#D8D4CA]">
+                <p className="font-bold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <span>Solo Retiro en Local</span>
+                  <span className="text-[10px] px-1.5 py-0.2 bg-[#C8102E]/20 text-[#C8102E] rounded border border-[#C8102E]/40 font-bold">GRATIS</span>
+                </p>
+                <p className="text-[11px] text-[#A09D96] mt-0.5">
+                  {pickupOnlyMessage || 'Envíos a domicilio pausados temporalmente. Retiros exclusivos por el taller en Las Breñas, Chaco.'}
+                </p>
+              </div>
             </div>
-            <div className="w-full h-1.5 bg-[#2B2B2B] rounded-full overflow-hidden">
-              <div
-                className={`h-full transition-all duration-300 ${
-                  remainingForFreeShipping === 0 ? 'bg-[#4CAF50]' : 'bg-[#C85A32]'
-                }`}
-                style={{ width: `${freeShippingProgress}%` }}
-              />
+          ) : (
+            <div className="mt-4 p-3 bg-[#181818] border border-[#262626] rounded-[2px]">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="flex items-center gap-1.5 text-[#E0DDD5] font-medium">
+                  <Truck className="w-3.5 h-3.5 text-[#C8102E]" />
+                  {remainingForFreeShipping === 0 ? (
+                    <strong className="text-[#4CAF50]">¡Tenés ENVÍO GRATIS a todo el país!</strong>
+                  ) : (
+                    <span>
+                      Te faltan <strong className="text-white">{formatPrice(remainingForFreeShipping)}</strong> para envío gratis
+                    </span>
+                  )}
+                </span>
+                <span className="font-mono text-[11px] text-[#A09D96]">
+                  {freeShippingProgress}%
+                </span>
+              </div>
+              <div className="w-full h-1.5 bg-[#2B2B2B] rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    remainingForFreeShipping === 0 ? 'bg-[#4CAF50]' : 'bg-[#C8102E]'
+                  }`}
+                  style={{ width: `${freeShippingProgress}%` }}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Cart Items List */}
@@ -300,14 +321,14 @@ export const CartDrawer: React.FC = () => {
                 </div>
               )}
               <div className="flex justify-between">
-                <span>Envío:</span>
-                <span className={shippingCost === 0 ? 'text-[#4CAF50] font-bold' : 'text-white'}>
-                  {shippingCost === 0 ? 'GRATIS' : formatPrice(shippingCost)}
+                <span>{!deliveryEnabled ? 'Entrega:' : 'Envío:'}</span>
+                <span className="text-[#4CAF50] font-bold">
+                  {!deliveryEnabled ? 'Retiro en Local (GRATIS)' : shippingCost === 0 ? 'GRATIS' : formatPrice(shippingCost)}
                 </span>
               </div>
               <div className="flex justify-between text-sm sm:text-base font-bold text-white pt-2 border-t border-[#222]">
                 <span>Total:</span>
-                <span className="text-[#C85A32]">{formatPrice(total)}</span>
+                <span className="text-[#C8102E]">{formatPrice(total)}</span>
               </div>
             </div>
 
@@ -315,7 +336,7 @@ export const CartDrawer: React.FC = () => {
             <button
               type="button"
               onClick={handleCheckout}
-              className="w-full py-4 bg-[#C85A32] hover:bg-[#DF683B] text-white font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] focus-ring"
+              className="w-full py-4 bg-[#C8102E] hover:bg-[#E01837] text-white font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#C8102E]/20 active:scale-[0.98] focus-ring cursor-pointer"
             >
               <span>Continuar compra por WhatsApp</span>
               <ArrowRight className="w-4 h-4" />

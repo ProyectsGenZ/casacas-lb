@@ -123,6 +123,8 @@ export const defaultSettings: SiteSettings = {
     tiktok: brandConfig.social.tiktok
   },
   shipping: {
+    deliveryEnabled: false,
+    pickupOnlyMessage: 'Solo retiros en nuestro local comercial en Las Breñas (Chaco). Envíos a domicilio deshabilitados por el momento.',
     freeShippingThreshold: brandConfig.freeShippingThreshold,
     standardShippingCost: brandConfig.standardShippingCost,
     installmentsCount: brandConfig.installmentsCount

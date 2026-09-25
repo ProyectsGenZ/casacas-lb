@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Product, ProductCategory } from '../../types';
-import { X, Image as ImageIcon, Save, Plus, Trash2, Upload } from 'lucide-react';
+import { Product, ProductCategory, OfferType, ProductOffer } from '../../types';
+import { X, Image as ImageIcon, Save, Plus, Trash2, Upload, Flame, Sparkles } from 'lucide-react';
 
 const compressAndReadFile = (file: File, maxWidth = 1000, maxHeight = 1000): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -65,6 +65,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     customizable: false,
     isFeatured: false,
     tag: '' as '' | 'Nuevo' | 'Más vendido' | 'Personalizable' | 'Para Equipos',
+    offerActive: false,
+    offerType: 'discount_percent' as OfferType,
+    offerDiscountPercent: 10,
+    offerSalePrice: 7650,
+    offerBadgeText: '10% OFF',
     shortDescription: '',
     description: '',
     fit: '',
@@ -75,17 +80,23 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   useEffect(() => {
     if (initialProduct) {
+      const basePrice = initialProduct.priceBase || initialProduct.price;
       setFormData({
         name: initialProduct.name,
         sku: initialProduct.sku || '',
         category: initialProduct.category,
-        priceBase: initialProduct.priceBase || initialProduct.price,
+        priceBase: basePrice,
         priceCustom: initialProduct.priceCustom ?? '',
         stock: initialProduct.stock ?? 15,
         minQuantity: initialProduct.minQuantity || 1,
         customizable: initialProduct.customizable,
         isFeatured: Boolean(initialProduct.isFeatured),
         tag: initialProduct.tag || '',
+        offerActive: Boolean(initialProduct.offer?.active),
+        offerType: initialProduct.offer?.type || 'discount_percent',
+        offerDiscountPercent: initialProduct.offer?.discountPercent ?? 10,
+        offerSalePrice: initialProduct.offer?.salePrice ?? Math.round(basePrice * 0.9),
+        offerBadgeText: initialProduct.offer?.badgeText || '10% OFF',
         shortDescription: initialProduct.shortDescription || '',
         description: initialProduct.description || '',
         fit: initialProduct.fit || '',
@@ -106,6 +117,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         customizable: false,
         isFeatured: false,
         tag: 'Nuevo',
+        offerActive: false,
+        offerType: 'discount_percent',
+        offerDiscountPercent: 10,
+        offerSalePrice: 7650,
+        offerBadgeText: '10% OFF',
         shortDescription: 'Prenda oficial diseñada para máxima durabilidad y calce urbano.',
         description: 'Confección de alta calidad con terminaciones reforzadas.',
         fit: 'Regular fit',
@@ -125,11 +141,44 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     const priceCustomNum = formData.priceCustom !== '' ? Number(formData.priceCustom) : null;
     const stockNum = Math.max(0, Number(formData.stock));
 
+    // Offer computation
+    let finalPrice = priceBaseNum;
+    let originalPriceVal: number | undefined = undefined;
+    let offerObj: ProductOffer | undefined = undefined;
+
+    if (formData.offerActive) {
+      originalPriceVal = priceBaseNum;
+      let badge = formData.offerBadgeText || 'OFERTA';
+
+      if (formData.offerType === 'discount_percent') {
+        const percent = Math.min(99, Math.max(1, Number(formData.offerDiscountPercent) || 10));
+        finalPrice = Math.round(priceBaseNum * (1 - percent / 100));
+        badge = `${percent}% OFF`;
+      } else if (formData.offerType === 'sale_price') {
+        finalPrice = Math.max(0, Number(formData.offerSalePrice) || priceBaseNum);
+        badge = 'OFERTA';
+      } else if (formData.offerType === '2x1') {
+        badge = '2x1 FLASH';
+      } else if (formData.offerType === 'free_customization') {
+        badge = 'ESTAMPA GRATIS';
+      }
+
+      offerObj = {
+        active: true,
+        type: formData.offerType,
+        discountPercent: Number(formData.offerDiscountPercent) || 10,
+        salePrice: Number(formData.offerSalePrice) || finalPrice,
+        badgeText: badge
+      };
+    }
+
     const finalProduct = {
       ...formData,
-      price: priceBaseNum,
+      price: finalPrice,
       priceBase: priceBaseNum,
       priceCustom: priceCustomNum,
+      originalPrice: originalPriceVal,
+      offer: offerObj,
       stock: stockNum,
       minQuantity: Math.max(1, Number(formData.minQuantity)),
       images: formData.images.filter((img) => img.trim() !== ''),
@@ -374,6 +423,120 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <span className="font-semibold text-[#DDD]">Destacar en Inicio (Hero / Destacados)</span>
               </label>
             </div>
+          </div>
+
+          {/* Section: Ofertas y Promociones Especiales */}
+          <div className="p-4 bg-[#1A1414] border border-[#3E2020] rounded-[2px] space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Flame className="w-4 h-4 text-[#C8102E]" />
+                <h3 className="font-bold uppercase tracking-wider text-white text-xs">
+                  Oferta & Promoción Especial
+                </h3>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-white bg-[#2A1616] px-3 py-1.5 rounded-[2px] border border-[#4E2424] hover:border-[#C8102E] transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.offerActive}
+                  onChange={(e) => setFormData({ ...formData, offerActive: e.target.checked })}
+                  className="w-4 h-4 accent-[#C8102E] rounded cursor-pointer"
+                />
+                <span>Activar Oferta</span>
+              </label>
+            </div>
+
+            {formData.offerActive && (
+              <div className="space-y-4 pt-2 border-t border-[#331818]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                      Tipo de Promoción
+                    </label>
+                    <select
+                      value={formData.offerType}
+                      onChange={(e) => setFormData({ ...formData, offerType: e.target.value as OfferType })}
+                      className="w-full bg-[#121212] border border-[#444] focus:border-[#C8102E] rounded-[2px] px-3 py-2 text-xs text-white focus:outline-none"
+                    >
+                      <option value="discount_percent">Porcentaje de Descuento (ej: 10% OFF)</option>
+                      <option value="2x1">Promoción 2x1 Flash</option>
+                      <option value="free_customization">Personalización GRATIS (Estampa sin cargo)</option>
+                      <option value="sale_price">Precio Rebajado Fijo</option>
+                      <option value="custom_badge">Etiqueta Personalizada</option>
+                    </select>
+                  </div>
+
+                  {formData.offerType === 'discount_percent' && (
+                    <div>
+                      <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                        Porcentaje a Descontar (%)
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={99}
+                        value={formData.offerDiscountPercent}
+                        onChange={(e) => setFormData({ ...formData, offerDiscountPercent: Number(e.target.value) })}
+                        className="w-full bg-[#121212] border border-[#444] focus:border-[#C8102E] rounded-[2px] px-3 py-2 text-xs text-white focus:outline-none font-bold text-[#C8102E]"
+                      />
+                    </div>
+                  )}
+
+                  {formData.offerType === 'sale_price' && (
+                    <div>
+                      <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                        Precio Rebajado Final ($)
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={formData.offerSalePrice}
+                        onChange={(e) => setFormData({ ...formData, offerSalePrice: Number(e.target.value) })}
+                        className="w-full bg-[#121212] border border-[#444] focus:border-[#C8102E] rounded-[2px] px-3 py-2 text-xs text-white focus:outline-none font-bold text-[#C8102E]"
+                      />
+                    </div>
+                  )}
+
+                  {(formData.offerType === '2x1' || formData.offerType === 'free_customization' || formData.offerType === 'custom_badge') && (
+                    <div>
+                      <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                        Texto del Badge / Distintivo
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.offerBadgeText}
+                        onChange={(e) => setFormData({ ...formData, offerBadgeText: e.target.value })}
+                        placeholder="ej: 2x1 FLASH, PERSONALIZACIÓN GRATIS"
+                        className="w-full bg-[#121212] border border-[#444] focus:border-[#C8102E] rounded-[2px] px-3 py-2 text-xs text-white focus:outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Live Preview Box */}
+                <div className="p-3 bg-[#121212] border border-[#333] rounded-[2px] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#888]">Vista previa cliente:</span>
+                    <span className="line-through text-[#777]">${Number(formData.priceBase).toLocaleString('es-AR')}</span>
+                    <span className="font-bold text-[#F8F7F4]">
+                      ${formData.offerType === 'discount_percent'
+                        ? Math.round(Number(formData.priceBase) * (1 - (Number(formData.offerDiscountPercent) || 0) / 100)).toLocaleString('es-AR')
+                        : formData.offerType === 'sale_price'
+                        ? Number(formData.offerSalePrice).toLocaleString('es-AR')
+                        : Number(formData.priceBase).toLocaleString('es-AR')}
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-[#C8102E] text-white font-bold text-[10px] uppercase rounded-[2px]">
+                    {formData.offerType === 'discount_percent'
+                      ? `${formData.offerDiscountPercent}% OFF`
+                      : formData.offerType === '2x1'
+                      ? '2x1 FLASH'
+                      : formData.offerType === 'free_customization'
+                      ? 'ESTAMPA GRATIS'
+                      : formData.offerBadgeText || 'OFERTA'}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Descriptions */}

@@ -824,46 +824,110 @@ export const StoreSettingsTab: React.FC = () => {
       {/* Tab 5: Envíos y Promociones */}
       {activeSection === 'shipping' && (
         <div className="space-y-6">
-          <div className="p-6 bg-[#121212] border border-[#222] rounded-[4px] space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white border-b border-[#222] pb-3">
-              Costos y Reglas de Envío
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-6 bg-[#121212] border border-[#222] rounded-[4px] space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#222] pb-4">
               <div>
-                <label className="block text-xs font-semibold text-[#BBB] mb-1">
-                  Monto Mínimo Envío Gratis (ARS)
-                </label>
-                <input
-                  type="number"
-                  value={formData.shipping.freeShippingThreshold}
-                  onChange={(e) => handleNestedChange('shipping', 'freeShippingThreshold', Number(e.target.value))}
-                  className="w-full bg-[#181818] border border-[#333] rounded-[2px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C8102E]"
-                />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                  Modalidad de Entrega y Envíos
+                </h3>
+                <p className="text-xs text-[#888] mt-1">
+                  Controla si aceptas envíos a domicilio a todo el país o si la tienda opera únicamente con retiros por el taller.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#BBB] mb-1">
-                  Costo de Envío Estándar (ARS)
-                </label>
+              {/* Delivery Enabled Toggle */}
+              <label className="inline-flex items-center gap-3 px-4 py-2 bg-[#1A1A1A] border border-[#333] rounded-[2px] cursor-pointer hover:border-[#444] transition-colors">
                 <input
-                  type="number"
-                  value={formData.shipping.standardShippingCost}
-                  onChange={(e) => handleNestedChange('shipping', 'standardShippingCost', Number(e.target.value))}
-                  className="w-full bg-[#181818] border border-[#333] rounded-[2px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C8102E]"
+                  type="checkbox"
+                  checked={Boolean(formData.shipping.deliveryEnabled)}
+                  onChange={(e) => handleNestedChange('shipping', 'deliveryEnabled', e.target.checked)}
+                  className="w-4 h-4 accent-[#C8102E] rounded cursor-pointer"
                 />
-              </div>
+                <span className="text-xs font-bold text-white">
+                  {formData.shipping.deliveryEnabled ? 'Envíos a Domicilio: HABILITADOS' : 'Solo Retiro en Local (Envíos Deshabilitados)'}
+                </span>
+              </label>
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#BBB] mb-1">
-                  Cantidad de Cuotas sin Interés
-                </label>
-                <input
-                  type="number"
-                  value={formData.shipping.installmentsCount}
-                  onChange={(e) => handleNestedChange('shipping', 'installmentsCount', Number(e.target.value))}
-                  className="w-full bg-[#181818] border border-[#333] rounded-[2px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C8102E]"
-                />
+            {/* Status explanation alert */}
+            {!formData.shipping.deliveryEnabled ? (
+              <div className="p-4 bg-amber-950/30 border border-amber-800/50 rounded-[2px] flex items-start gap-3">
+                <Truck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-200/90 space-y-1">
+                  <p className="font-bold text-amber-300">
+                    Modo Activo: Solo Retiro en Local Comercial (Las Breñas)
+                  </p>
+                  <p>
+                    El carrito de compras y los mensajes de WhatsApp indicarán automáticamente que el pedido es para retirar en el local comercial sin costo de envío adicional ($0).
+                  </p>
+                </div>
               </div>
+            ) : (
+              <div className="p-4 bg-emerald-950/30 border border-emerald-800/50 rounded-[2px] flex items-start gap-3">
+                <Truck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-200/90">
+                  <p className="font-bold text-emerald-300">
+                    Envíos a Domicilio Habilitados a Todo el País
+                  </p>
+                  <p>
+                    Se cobrará el costo de envío estándar o se bonificará automáticamente si la compra supera el monto mínimo configurado.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Pickup Note input */}
+            <div>
+              <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                Aviso / Instrucciones de Retiro en el Local
+              </label>
+              <input
+                type="text"
+                value={formData.shipping.pickupOnlyMessage || ''}
+                onChange={(e) => handleNestedChange('shipping', 'pickupOnlyMessage', e.target.value)}
+                placeholder="ej: Solo retiros en nuestro local en Las Breñas (Chaco). Horarios: Lun a Sáb 9 a 13 y 17 a 21hs."
+                className="w-full bg-[#181818] border border-[#333] rounded-[2px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C8102E]"
+              />
+            </div>
+
+            {formData.shipping.deliveryEnabled && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#222]">
+                <div>
+                  <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                    Monto Mínimo Envío Gratis (ARS)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.shipping.freeShippingThreshold}
+                    onChange={(e) => handleNestedChange('shipping', 'freeShippingThreshold', Number(e.target.value))}
+                    className="w-full bg-[#181818] border border-[#333] rounded-[2px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C8102E]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                    Costo de Envío Estándar (ARS)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.shipping.standardShippingCost}
+                    onChange={(e) => handleNestedChange('shipping', 'standardShippingCost', Number(e.target.value))}
+                    className="w-full bg-[#181818] border border-[#333] rounded-[2px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C8102E]"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                Cantidad de Cuotas sin Interés
+              </label>
+              <input
+                type="number"
+                value={formData.shipping.installmentsCount}
+                onChange={(e) => handleNestedChange('shipping', 'installmentsCount', Number(e.target.value))}
+                className="w-full max-w-xs bg-[#181818] border border-[#333] rounded-[2px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C8102E]"
+              />
             </div>
           </div>
         </div>

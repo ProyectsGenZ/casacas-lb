@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Product, ProductColor } from '../types';
 import { brandConfig } from '../config/brandConfig';
+import { useStoreSettings } from './StoreSettingsContext';
 
 interface CartContextType {
   cart: CartItem[];
@@ -21,6 +22,8 @@ interface CartContextType {
   totalItems: number;
   freeShippingProgress: number;
   remainingForFreeShipping: number;
+  deliveryEnabled: boolean;
+  pickupOnlyMessage?: string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -145,15 +148,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setDiscountPercentage(0);
   };
 
+  const { settings } = useStoreSettings();
+  const deliveryEnabled = settings.shipping?.deliveryEnabled ?? false;
+  const freeThreshold = settings.shipping?.freeShippingThreshold || brandConfig.freeShippingThreshold;
+  const standardCost = settings.shipping?.standardShippingCost || brandConfig.standardShippingCost;
+
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const discountAmount = Math.round(subtotal * (discountPercentage / 100));
-  const freeShipping = subtotal >= brandConfig.freeShippingThreshold;
-  const shippingCost = cart.length === 0 ? 0 : freeShipping ? 0 : brandConfig.standardShippingCost;
+
+  // If delivery is disabled, shipping is always 0 (pickup only). Otherwise standard logic applies.
+  const freeShipping = !deliveryEnabled || subtotal >= freeThreshold;
+  const shippingCost = !deliveryEnabled ? 0 : cart.length === 0 ? 0 : freeShipping ? 0 : standardCost;
   const total = Math.max(0, subtotal - discountAmount + shippingCost);
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   
-  const freeShippingProgress = Math.min(100, Math.round((subtotal / brandConfig.freeShippingThreshold) * 100));
-  const remainingForFreeShipping = Math.max(0, brandConfig.freeShippingThreshold - subtotal);
+  const freeShippingProgress = Math.min(100, Math.round((subtotal / freeThreshold) * 100));
+  const remainingForFreeShipping = Math.max(0, freeThreshold - subtotal);
 
   return (
     <CartContext.Provider
@@ -175,7 +185,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         total,
         totalItems,
         freeShippingProgress,
-        remainingForFreeShipping
+        remainingForFreeShipping,
+        deliveryEnabled,
+        pickupOnlyMessage: settings.shipping?.pickupOnlyMessage
       }}
     >
       {children}

@@ -54,6 +54,8 @@ export interface SiteSettings {
     tiktok: string;
   };
   shipping: {
+    deliveryEnabled: boolean;
+    pickupOnlyMessage?: string;
     freeShippingThreshold: number;
     standardShippingCost: number;
     installmentsCount: number;

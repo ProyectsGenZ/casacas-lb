@@ -20,7 +20,8 @@ import {
   ArrowLeft,
   Share2,
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  Flame
 } from 'lucide-react';
 
 export const ProductDetailView: React.FC = () => {
@@ -276,10 +277,21 @@ export const ProductDetailView: React.FC = () => {
 
               {/* Price display */}
               <div className="pt-3">
-                <div className="flex items-baseline gap-3">
+                <div className="flex items-baseline gap-3 flex-wrap">
                   <span className="font-bold text-3xl text-[#F8F7F4]">
                     {formatMoney(currentPrice)}
                   </span>
+                  {selectedProduct.originalPrice && selectedProduct.originalPrice > currentPrice && (
+                    <span className="line-through text-base text-[#777]">
+                      {formatMoney(selectedProduct.originalPrice)}
+                    </span>
+                  )}
+                  {selectedProduct.offer?.active && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#C8102E] text-white text-xs font-bold uppercase rounded-[2px] shadow-sm">
+                      <Flame className="w-3 h-3 fill-current" />
+                      {selectedProduct.offer.badgeText || (selectedProduct.offer.type === 'discount_percent' ? `${selectedProduct.offer.discountPercent}% OFF` : 'OFERTA')}
+                    </span>
+                  )}
                   <span className="text-xs text-[#888]">
                     {isCustomVersion ? 'por unidad con personalización' : 'precio base unitario'}
                   </span>
