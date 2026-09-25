@@ -6,6 +6,8 @@ import { ProductManagementProvider } from './context/ProductManagementContext';
 import { AdminAuthProvider, useAdminAuth } from './context/AdminAuthContext';
 import { brandConfig } from './config/brandConfig';
 
+import { StoreSettingsProvider, useStoreSettings } from './context/StoreSettingsContext';
+
 // Layout
 import { AnnouncementBar } from './components/layout/AnnouncementBar';
 import { Header } from './components/layout/Header';
@@ -97,6 +99,8 @@ const AppContent: React.FC = () => {
     );
   }
 
+  const { settings } = useStoreSettings();
+
   // Storefront Public View
   return (
     <div className="min-h-screen flex flex-col bg-[#0E0E0E] text-[#F8F7F4] relative">
@@ -115,13 +119,13 @@ const AppContent: React.FC = () => {
 
       {/* Floating WhatsApp Button */}
       <a
-        href={`https://wa.me/${brandConfig.contact.whatsapp}?text=${encodeURIComponent(
-          'Hola Leo! Te escribo desde la tienda online de CASACAS LB.'
+        href={`https://wa.me/${settings.contact.whatsapp}?text=${encodeURIComponent(
+          `Hola! Te escribo desde la tienda online de ${settings.brandName}.`
         )}`}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 bg-[#25D366] hover:bg-[#20BA5A] text-[#121212] font-bold text-xs uppercase tracking-wider rounded-full shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 focus-ring"
-        aria-label="Abrir chat de WhatsApp con Leo"
+        aria-label={`Abrir chat de WhatsApp con ${settings.brandName}`}
       >
         <MessageCircle className="w-5 h-5 text-[#121212] fill-current" />
         <span className="hidden sm:inline">WhatsApp directo</span>
@@ -142,15 +146,17 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <UIProvider>
-      <ProductManagementProvider>
-        <AdminAuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <AppContent />
-            </WishlistProvider>
-          </CartProvider>
-        </AdminAuthProvider>
-      </ProductManagementProvider>
+      <StoreSettingsProvider>
+        <ProductManagementProvider>
+          <AdminAuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <AppContent />
+              </WishlistProvider>
+            </CartProvider>
+          </AdminAuthProvider>
+        </ProductManagementProvider>
+      </StoreSettingsProvider>
     </UIProvider>
   );
 }

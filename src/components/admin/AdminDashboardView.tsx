@@ -5,6 +5,7 @@ import { useUI } from '../../context/UIContext';
 import { Product, ProductCategory } from '../../types';
 import { ProductFormModal } from './ProductFormModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { StoreSettingsTab } from './StoreSettingsTab';
 import {
   Package,
   Plus,
@@ -19,7 +20,8 @@ import {
   RotateCcw,
   Sparkles,
   ArrowUpDown,
-  Filter
+  Filter,
+  Store
 } from 'lucide-react';
 import { brandConfig } from '../../config/brandConfig';
 
@@ -27,6 +29,9 @@ export const AdminDashboardView: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct, updateStock, resetToDefault } = useProductManagement();
   const { logout, adminUser } = useAdminAuth();
   const { navigateToHome, showToast } = useUI();
+
+  // Main Tab State (Products vs CMS Store Settings)
+  const [mainTab, setMainTab] = useState<'products' | 'cms'>('products');
 
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -166,13 +171,44 @@ export const AdminDashboardView: React.FC = () => {
       {/* Main Admin Content */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
-        {/* Header Title & Quick Action */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-[#C8102E] font-bold">
-              Inventario & Catálogo
-            </span>
-            <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-[#F8F7F4] tracking-tight">
+        {/* Main Navigation Tabs */}
+        <div className="flex flex-wrap items-center gap-3 border-b border-[#262626] pb-5">
+          <button
+            onClick={() => setMainTab('products')}
+            className={`px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-[2px] transition-all flex items-center gap-2 cursor-pointer ${
+              mainTab === 'products'
+                ? 'bg-[#C8102E] text-white shadow-lg shadow-[#C8102E]/20'
+                : 'bg-[#181818] text-[#888] hover:text-white hover:bg-[#222]'
+            }`}
+          >
+            <Package className="w-4 h-4" />
+            <span>Productos y Stock</span>
+          </button>
+
+          <button
+            onClick={() => setMainTab('cms')}
+            className={`px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-[2px] transition-all flex items-center gap-2 cursor-pointer ${
+              mainTab === 'cms'
+                ? 'bg-[#C8102E] text-white shadow-lg shadow-[#C8102E]/20'
+                : 'bg-[#181818] text-[#888] hover:text-white hover:bg-[#222]'
+            }`}
+          >
+            <Store className="w-4 h-4" />
+            <span>Personalización y Contenido (CMS)</span>
+          </button>
+        </div>
+
+        {mainTab === 'cms' ? (
+          <StoreSettingsTab />
+        ) : (
+          <>
+            {/* Header Title & Quick Action */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-mono uppercase tracking-widest text-[#C8102E] font-bold">
+                  Inventario & Catálogo
+                </span>
+                <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-[#F8F7F4] tracking-tight">
               Gestión de Productos
             </h1>
           </div>
@@ -463,6 +499,9 @@ export const AdminDashboardView: React.FC = () => {
           </div>
 
         </div>
+
+        </>
+      )}
 
       </main>
 

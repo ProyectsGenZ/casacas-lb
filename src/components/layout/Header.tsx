@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { brandConfig } from '../../config/brandConfig';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
 import { useUI } from '../../context/UIContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -17,6 +18,7 @@ export const Header: React.FC = () => {
     setIsMobileNavOpen
   } = useUI();
 
+  const { enabledCategories, settings } = useStoreSettings();
   const { totalItems, setIsCartOpen } = useCart();
   const { wishlistCount } = useWishlist();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -55,17 +57,17 @@ export const Header: React.FC = () => {
             <button
               onClick={navigateToHome}
               className="flex items-center group text-left focus-ring shrink-0 py-1"
-              aria-label={`Ir a inicio de ${brandConfig.name}`}
+              aria-label={`Ir a inicio de ${settings.brandName}`}
             >
               <img
-                src="/media/logo-casacas-oficial.png"
-                alt={brandConfig.name}
+                src={settings.logoUrl || "/media/logo-casacas-oficial.png"}
+                alt={settings.brandName}
                 className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform group-hover:scale-[1.02]"
               />
             </button>
           </div>
 
-          {/* Desktop Navigation - Spacious, uncluttered, no overlapping */}
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-7 xl:gap-9" aria-label="Navegación principal">
             <button
               onClick={navigateToHome}
@@ -89,19 +91,15 @@ export const Header: React.FC = () => {
               Catálogo
             </button>
 
-            <button
-              onClick={() => navigateToCatalog('Indumentaria')}
-              className="text-xs uppercase tracking-widest font-bold text-[#D0CDC6] hover:text-white transition-colors focus-ring py-1 whitespace-nowrap"
-            >
-              Indumentaria
-            </button>
-
-            <button
-              onClick={() => navigateToCatalog('UV & vinilo')}
-              className="text-xs uppercase tracking-widest font-bold text-[#D0CDC6] hover:text-white transition-colors focus-ring py-1 whitespace-nowrap"
-            >
-              UV & Vinilo
-            </button>
+            {enabledCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => navigateToCatalog(cat.slug as any)}
+                className="text-xs uppercase tracking-widest font-bold text-[#D0CDC6] hover:text-white transition-colors focus-ring py-1 whitespace-nowrap"
+              >
+                {cat.name}
+              </button>
+            ))}
 
             <a
               href="#personaliza"

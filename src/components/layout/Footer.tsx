@@ -1,5 +1,6 @@
 import React from 'react';
 import { brandConfig } from '../../config/brandConfig';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
 import { useUI } from '../../context/UIContext';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { categoriesList } from '../../data/products';
@@ -9,6 +10,7 @@ import { MessageCircle, Mail, MapPin, Clock, ShieldCheck, Truck, CreditCard, Rot
 export const Footer: React.FC = () => {
   const { navigateToCatalog, setIsSizeGuideOpen, setIsStoryModalOpen, setActiveView } = useUI();
   const { isAuthenticated } = useAdminAuth();
+  const { settings, enabledCategories } = useStoreSettings();
 
   return (
     <footer className="bg-[#0B0B0B] border-t border-[#1F1F1F] text-[#9E9D99] pt-16 pb-12">
@@ -30,9 +32,9 @@ export const Footer: React.FC = () => {
           </div>
           <div className="p-4 bg-[#121212] border border-[#222] rounded-[2px]">
             <b className="block text-white uppercase font-display font-bold text-sm tracking-wide mb-1">
-              Retiro Local
+              Retiro en Local
             </b>
-            <span className="text-[#8E8B84]">Av. General Jones, Las Breñas, Chaco sin costo de flete.</span>
+            <span className="text-[#8E8B84]">{settings.contact.address}, Las Breñas sin costo de flete.</span>
           </div>
           <div className="p-4 bg-[#121212] border border-[#222] rounded-[2px]">
             <b className="block text-white uppercase font-display font-bold text-sm tracking-wide mb-1">
@@ -49,28 +51,28 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
               <img
-                src="/media/logo-casacas-oficial.png"
-                alt="CASACAS LB"
+                src={settings.logoUrl || "/media/logo-casacas-oficial.png"}
+                alt={settings.brandName}
                 className="h-10 w-auto object-contain"
               />
             </div>
 
             <p className="text-sm text-[#8E8C86] max-w-sm leading-relaxed">
-              {brandConfig.tagline}. Prendas, accesorios y piezas diseñadas para acompañar a tu equipo, tu marca y tu forma de moverte.
+              {settings.tagline}. Prendas, accesorios y piezas diseñadas para acompañar a tu equipo, tu marca y tu forma de moverte.
             </p>
 
             <div className="pt-2 space-y-2 text-xs text-[#B5B2AA]">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-[#C8102E] shrink-0 mt-0.5" />
-                <span>{brandConfig.contact.address}, {brandConfig.contact.addressDetail}</span>
+                <span>{settings.contact.address}, {settings.contact.addressDetail}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[#C8102E] shrink-0" />
-                <span>{brandConfig.contact.hours}</span>
+                <span>{settings.contact.hours}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-[#25D366] shrink-0" />
-                <span>{brandConfig.contact.whatsappFormatted}</span>
+                <span>{settings.contact.whatsappFormatted}</span>
               </div>
             </div>
           </div>
@@ -86,16 +88,16 @@ export const Footer: React.FC = () => {
                   onClick={() => navigateToCatalog('Todos')}
                   className="hover:text-white transition-colors text-left focus-ring"
                 >
-                  Ver todo el catálogo (27)
+                  Ver todo el catálogo
                 </button>
               </li>
-              {categoriesList.map((cat) => (
-                <li key={cat.slug}>
+              {enabledCategories.map((cat) => (
+                <li key={cat.id}>
                   <button
-                    onClick={() => navigateToCatalog(cat.slug as ProductCategory)}
+                    onClick={() => navigateToCatalog(cat.slug as any)}
                     className="hover:text-white transition-colors text-left focus-ring"
                   >
-                    {cat.name} ({cat.count})
+                    {cat.name}
                   </button>
                 </li>
               ))}

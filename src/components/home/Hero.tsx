@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useUI } from '../../context/UIContext';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
 import { brandConfig } from '../../config/brandConfig';
 import { ArrowRight, ChevronLeft, ChevronRight, ShieldCheck, Sparkles, MapPin } from 'lucide-react';
 
@@ -47,6 +48,7 @@ const heroSlides = [
 
 export const Hero: React.FC = () => {
   const { navigateToCatalog } = useUI();
+  const { settings } = useStoreSettings();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -54,14 +56,33 @@ export const Hero: React.FC = () => {
   const currentDragOffsetRef = useRef(0);
   const wasDraggedRef = useRef(false);
 
+  const slides = [
+    {
+      eyebrow: settings.hero?.badge || "INDUMENTARIA + IDENTIDAD",
+      title: (
+        <>
+          {settings.hero?.title || "HACÉ QUE"} <br />
+          <span className="text-[#F8F7F4] underline decoration-[#C8102E] decoration-4 underline-offset-8">
+            {settings.hero?.highlightWord || "TE VEAN."}
+          </span>
+        </>
+      ),
+      copy: settings.hero?.subtitle || "Prendas, accesorios y estampas para equipos que salen a jugar, marcas que quieren hacerse notar y personas que visten lo que creen.",
+      image: settings.hero?.bgImage || "https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?auto=format&fit=crop&w=2000&q=85",
+      primaryCta: settings.hero?.primaryCtaText || "Explorar catálogo"
+    },
+    heroSlides[1],
+    heroSlides[2]
+  ];
+
   // Auto-play timer that pauses while dragging
   useEffect(() => {
     if (isDragging) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [isDragging, currentSlide]);
+  }, [isDragging, currentSlide, slides.length]);
 
   // Drag & Swipe event handlers (mouse and touch)
   const handleDragStart = (clientX: number) => {
@@ -88,10 +109,10 @@ export const Hero: React.FC = () => {
 
     if (deltaX < -threshold) {
       // Swiped left -> Next slide
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
     } else if (deltaX > threshold) {
       // Swiped right -> Previous slide
-      setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
     }
 
     setIsDragging(false);
@@ -99,7 +120,7 @@ export const Hero: React.FC = () => {
     currentDragOffsetRef.current = 0;
   };
 
-  const slide = heroSlides[currentSlide];
+  const slide = slides[currentSlide];
 
   return (
     <>
@@ -125,11 +146,11 @@ export const Hero: React.FC = () => {
             willChange: 'transform'
           }}
         >
-          {heroSlides.map((s, idx) => (
+          {slides.map((s, idx) => (
             <div key={idx} className="relative w-full h-full flex-shrink-0 overflow-hidden">
               <img
                 src={s.image}
-                alt={`CASACAS LB - ${s.eyebrow}`}
+                alt={`${settings.brandName} - ${s.eyebrow}`}
                 className="w-full h-full object-cover object-center filter brightness-[0.62] contrast-[1.08] pointer-events-none select-none"
                 draggable={false}
               />
@@ -178,7 +199,7 @@ export const Hero: React.FC = () => {
                 onMouseDown={(e) => e.stopPropagation()}
                 className="inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-[#F8F7F4] hover:bg-white text-[#121212] font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all duration-150 active:scale-[0.98] shadow-lg focus-ring cursor-pointer"
               >
-                <span>Explorar catálogo</span>
+                <span>{(slide as any).primaryCta || "Explorar catálogo"}</span>
                 <ArrowRight className="w-4 h-4 text-[#121212]" />
               </button>
 

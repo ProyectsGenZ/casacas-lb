@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useUI } from '../../context/UIContext';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
 import { brandConfig } from '../../config/brandConfig';
 import { categoriesList } from '../../data/products';
 import { ProductCategory } from '../../types';
@@ -14,6 +15,8 @@ export const MobileNav: React.FC = () => {
     setIsSizeGuideOpen,
     setIsStoryModalOpen
   } = useUI();
+
+  const { enabledCategories, settings } = useStoreSettings();
 
   // Close on Escape key
   useEffect(() => {
@@ -48,8 +51,8 @@ export const MobileNav: React.FC = () => {
           <div className="flex items-center justify-between pb-6 border-b border-[#222222]">
             <div className="flex items-center gap-2">
               <img
-                src="/media/logo-casacas-oficial.png"
-                alt={brandConfig.name}
+                src={settings.logoUrl || "/media/logo-casacas-oficial.png"}
+                alt={settings.brandName}
                 className="h-8 w-auto object-contain"
               />
             </div>
@@ -89,14 +92,13 @@ export const MobileNav: React.FC = () => {
               </span>
             </div>
 
-            {categoriesList.map((cat) => (
+            {enabledCategories.map((cat) => (
               <button
-                key={cat.slug}
-                onClick={() => handleCategoryClick(cat.slug as ProductCategory)}
+                key={cat.id}
+                onClick={() => handleCategoryClick(cat.slug as any)}
                 className="w-full text-left py-2.5 px-2 text-sm font-medium text-[#C8C5BD] hover:text-white hover:bg-[#1A1A1A] rounded-[2px] flex items-center justify-between transition-colors"
               >
                 <span>{cat.name}</span>
-                <span className="text-xs text-[#666] font-mono">({cat.count})</span>
               </button>
             ))}
 

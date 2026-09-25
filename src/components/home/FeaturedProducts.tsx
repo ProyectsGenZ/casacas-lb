@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useProductManagement } from '../../context/ProductManagementContext';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
 import { ProductCard } from '../product/ProductCard';
 import { useUI } from '../../context/UIContext';
 import { ProductCategory } from '../../types';
@@ -8,14 +9,17 @@ import { ArrowRight } from 'lucide-react';
 export const FeaturedProducts: React.FC = () => {
   const { navigateToCatalog } = useUI();
   const { products } = useProductManagement();
-  const [selectedFilter, setSelectedFilter] = useState<'Todos' | ProductCategory>('Todos');
+  const { enabledCategories, isCategoryEnabled } = useStoreSettings();
+  const [selectedFilter, setSelectedFilter] = useState<string>('Todos');
 
-  const filterTabs: ('Todos' | ProductCategory)[] = ['Todos', 'Indumentaria', 'Accesorios', 'UV & vinilo', 'Banderas'];
+  const filterTabs = ['Todos', ...enabledCategories.map((c) => c.name)];
 
-  const displayedProducts = products.filter((p) => {
-    if (selectedFilter === 'Todos') return true;
-    return p.category === selectedFilter;
-  });
+  const displayedProducts = products
+    .filter((p) => isCategoryEnabled(p.category))
+    .filter((p) => {
+      if (selectedFilter === 'Todos') return true;
+      return p.category.toLowerCase() === selectedFilter.toLowerCase();
+    });
 
   return (
     <section className="py-20 bg-[#0E0E0E] border-b border-[#1E1E1E]" aria-labelledby="featured-heading">

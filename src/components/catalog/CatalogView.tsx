@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { categoriesList } from '../../data/products';
 import { useProductManagement } from '../../context/ProductManagementContext';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
 import { ProductCard } from '../product/ProductCard';
 import { useUI } from '../../context/UIContext';
 import { ProductCategory, SortOption } from '../../types';
@@ -9,8 +9,9 @@ import { Filter, RotateCcw, SlidersHorizontal, ArrowUpDown, X, Sparkles } from '
 export const CatalogView: React.FC = () => {
   const { catalogCategoryFilter, setCatalogCategoryFilter } = useUI();
   const { products } = useProductManagement();
+  const { enabledCategories, isCategoryEnabled } = useStoreSettings();
 
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'Todos'>(catalogCategoryFilter);
+  const [selectedCategory, setSelectedCategory] = useState<string>(catalogCategoryFilter);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [onlyCustomizable, setOnlyCustomizable] = useState<boolean>(false);
   const [maxPrice, setMaxPrice] = useState<number>(55000);
@@ -26,9 +27,10 @@ export const CatalogView: React.FC = () => {
   // Filter logic
   const filteredProducts = useMemo(() => {
     return products
+      .filter((p) => isCategoryEnabled(p.category))
       .filter((p) => {
         // Category
-        if (selectedCategory !== 'Todos' && p.category !== selectedCategory) {
+        if (selectedCategory !== 'Todos' && p.category.toLowerCase() !== selectedCategory.toLowerCase()) {
           return false;
         }
         // Size
@@ -189,15 +191,15 @@ export const CatalogView: React.FC = () => {
                   <span className="text-[10px] opacity-70 font-mono">{products.length}</span>
                 </button>
 
-                {categoriesList.map((cat) => {
-                  const isSelected = selectedCategory === cat.slug;
+                {enabledCategories.map((cat) => {
+                  const isSelected = selectedCategory.toLowerCase() === cat.slug.toLowerCase();
                   return (
                     <button
-                      key={cat.slug}
+                      key={cat.id}
                       type="button"
                       onClick={() => {
-                        setSelectedCategory(cat.slug as ProductCategory);
-                        setCatalogCategoryFilter(cat.slug as ProductCategory);
+                        setSelectedCategory(cat.slug as any);
+                        setCatalogCategoryFilter(cat.slug as any);
                       }}
                       className={`w-full text-left py-2 px-2.5 text-xs font-semibold rounded-[2px] transition-colors flex items-center justify-between ${
                         isSelected
@@ -207,7 +209,7 @@ export const CatalogView: React.FC = () => {
                     >
                       <span>{cat.name}</span>
                       <span className="text-[10px] opacity-70 font-mono">
-                        {products.filter((p) => p.category === cat.slug).length}
+                        {products.filter((p) => p.category.toLowerCase() === cat.slug.toLowerCase()).length}
                       </span>
                     </button>
                   );
@@ -351,16 +353,16 @@ export const CatalogView: React.FC = () => {
                   >
                     Todas
                   </button>
-                  {categoriesList.map((cat) => (
+                  {enabledCategories.map((cat) => (
                     <button
-                      key={cat.slug}
+                      key={cat.id}
                       type="button"
                       onClick={() => {
-                        setSelectedCategory(cat.slug as ProductCategory);
-                        setCatalogCategoryFilter(cat.slug as ProductCategory);
+                        setSelectedCategory(cat.slug as any);
+                        setCatalogCategoryFilter(cat.slug as any);
                       }}
                       className={`py-2 px-3 text-xs font-semibold rounded-[2px] border truncate ${
-                        selectedCategory === cat.slug ? 'bg-[#C8102E] text-white border-[#C8102E]' : 'bg-[#181818] border-[#2A2A2A] text-[#CCC]'
+                        selectedCategory.toLowerCase() === cat.slug.toLowerCase() ? 'bg-[#C8102E] text-white border-[#C8102E]' : 'bg-[#181818] border-[#2A2A2A] text-[#CCC]'
                       }`}
                     >
                       {cat.name}

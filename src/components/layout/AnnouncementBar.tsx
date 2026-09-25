@@ -1,8 +1,11 @@
 import React from 'react';
-import { brandConfig } from '../../config/brandConfig';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
 
 export const AnnouncementBar: React.FC = () => {
+  const { settings } = useStoreSettings();
   const items = [1, 2, 3, 4];
+
+  if (!settings.announcement?.enabled) return null;
 
   return (
     <aside
@@ -16,10 +19,10 @@ export const AnnouncementBar: React.FC = () => {
             {items.map((i) => (
               <div key={`track1-${i}`} className="inline-flex items-center gap-3 px-6 sm:px-10 shrink-0">
                 <span className="bg-[#C8102E] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-[2px] tracking-wider uppercase shrink-0">
-                  {brandConfig.announcement.badge}
+                  {settings.announcement.badge}
                 </span>
                 <span className="text-[11px] sm:text-xs font-semibold tracking-wide text-[#E5E2DA] shrink-0">
-                  {brandConfig.announcement.text}
+                  {settings.announcement.text}
                 </span>
                 <span className="text-[#C8102E] font-bold mx-2 shrink-0">•</span>
               </div>
@@ -31,10 +34,10 @@ export const AnnouncementBar: React.FC = () => {
             {items.map((i) => (
               <div key={`track2-${i}`} className="inline-flex items-center gap-3 px-6 sm:px-10 shrink-0">
                 <span className="bg-[#C8102E] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-[2px] tracking-wider uppercase shrink-0">
-                  {brandConfig.announcement.badge}
+                  {settings.announcement.badge}
                 </span>
                 <span className="text-[11px] sm:text-xs font-semibold tracking-wide text-[#E5E2DA] shrink-0">
-                  {brandConfig.announcement.text}
+                  {settings.announcement.text}
                 </span>
                 <span className="text-[#C8102E] font-bold mx-2 shrink-0">•</span>
               </div>

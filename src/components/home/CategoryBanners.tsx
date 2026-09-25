@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUI } from '../../context/UIContext';
-import { categoriesList } from '../../data/products';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
+import { useProductManagement } from '../../context/ProductManagementContext';
 import { ProductCategory, CategoryItem } from '../../types';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
 
@@ -137,6 +138,8 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
 
 export const CategoryBanners: React.FC = () => {
   const { navigateToCatalog } = useUI();
+  const { enabledCategories } = useStoreSettings();
+  const { products } = useProductManagement();
 
   return (
     <section className="py-20 bg-[#0E0E0E] border-b border-[#1E1E1E]" aria-labelledby="categories-heading">
@@ -163,13 +166,28 @@ export const CategoryBanners: React.FC = () => {
 
         {/* Categories Grid with Zoom and Crossfading Multi-Example Preview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-          {categoriesList.map((category) => (
-            <CategoryCard
-              key={category.slug}
-              category={category}
-              onSelect={(cat) => navigateToCatalog(cat)}
-            />
-          ))}
+          {enabledCategories.map((category) => {
+            const count = products.filter(
+              (p) => p.category.toLowerCase() === category.slug.toLowerCase()
+            ).length;
+
+            const categoryItem: CategoryItem = {
+              name: category.name as ProductCategory,
+              slug: category.slug as ProductCategory,
+              count: count > 0 ? count : 1,
+              image: category.image,
+              images: category.images && category.images.length > 0 ? category.images : [category.image],
+              description: category.description
+            };
+
+            return (
+              <CategoryCard
+                key={category.id}
+                category={categoryItem}
+                onSelect={(cat) => navigateToCatalog(cat)}
+              />
+            );
+          })}
         </div>
 
       </div>
