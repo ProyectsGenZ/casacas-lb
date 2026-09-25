@@ -8,6 +8,16 @@ export interface CategoryConfig {
   images?: string[];
 }
 
+export interface HeroSlideConfig {
+  id: string;
+  badge: string;
+  title: string;
+  highlightWord: string;
+  subtitle: string;
+  bgImage: string;
+  primaryCtaText: string;
+}
+
 export interface SiteSettings {
   brandName: string;
   brandShortName: string;
@@ -20,13 +30,13 @@ export interface SiteSettings {
     linkText?: string;
   };
   hero: {
-    badge: string;
-    title: string;
-    highlightWord: string;
-    subtitle: string;
-    bgImage: string;
-    primaryCtaText: string;
-    secondaryCtaText: string;
+    badge?: string;
+    title?: string;
+    highlightWord?: string;
+    subtitle?: string;
+    bgImage?: string;
+    primaryCtaText?: string;
+    slides: HeroSlideConfig[];
   };
   categories: CategoryConfig[];
   contact: {

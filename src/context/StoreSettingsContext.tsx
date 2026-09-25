@@ -77,7 +77,35 @@ export const defaultSettings: SiteSettings = {
     subtitle: "Indumentaria deportiva, personalización por catálogo y confección directa desde Las Breñas, Chaco.",
     bgImage: "https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?auto=format&fit=crop&w=1920&q=80",
     primaryCtaText: "Ver Catálogo Completo",
-    secondaryCtaText: "Consultar por WhatsApp"
+    slides: [
+      {
+        id: "slide-1",
+        badge: "COLECCIÓN OFICIAL 2026",
+        title: "HACÉ QUE",
+        highlightWord: "TE VEAN.",
+        subtitle: "Prendas, accesorios y estampas para equipos que salen a jugar, marcas que quieren hacerse notar y personas que visten lo que creen.",
+        bgImage: "https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?auto=format&fit=crop&w=2000&q=85",
+        primaryCtaText: "Explorar catálogo"
+      },
+      {
+        id: "slide-2",
+        badge: "EQUIPOS + MARCAS",
+        title: "VESTÍ",
+        highlightWord: "TU CÓDIGO.",
+        subtitle: "Diseñamos prendas y piezas que hacen visible lo que une a tu equipo, tu marca y tu forma de moverte.",
+        bgImage: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=2000&q=85",
+        primaryCtaText: "Diseño para Equipos"
+      },
+      {
+        id: "slide-3",
+        badge: "HECHO EN LAS BREÑAS",
+        title: "MOVERTE",
+        highlightWord: "CON IDENTIDAD.",
+        subtitle: "Del diseño a la entrega: una experiencia cercana para convertir tus ideas en piezas que representan.",
+        bgImage: "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=2000&q=85",
+        primaryCtaText: "Consultar por WhatsApp"
+      }
+    ]
   },
   categories: defaultCategories,
   contact: {
@@ -141,7 +169,15 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
         if (snapshot.exists()) {
           const data = snapshot.data() as Partial<SiteSettings>;
           setSettings((prev) => {
-            const merged = { ...prev, ...data };
+            const merged: SiteSettings = {
+              ...prev,
+              ...data,
+              hero: {
+                ...prev.hero,
+                ...(data.hero || {}),
+                slides: data.hero?.slides && data.hero.slides.length > 0 ? data.hero.slides : defaultSettings.hero.slides
+              }
+            };
             try {
               localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
             } catch {

@@ -1,6 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Product, ProductCategory } from '../../types';
-import { X, Image as ImageIcon, Save, Plus, Trash2 } from 'lucide-react';
+import { X, Image as ImageIcon, Save, Plus, Trash2, Upload } from 'lucide-react';
+
+const compressAndReadFile = (file: File, maxWidth = 1000, maxHeight = 1000): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const elem = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        elem.width = width;
+        elem.height = height;
+        const ctx = elem.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        const dataUrl = elem.toDataURL('image/jpeg', 0.82);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
+const CATEGORIES: ProductCategory[] = ['Indumentaria', 'Accesorios', 'UV & vinilo', 'Banderas'];
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -8,8 +45,6 @@ interface ProductFormModalProps {
   onSave: (productData: any) => void;
   initialProduct?: Product | null;
 }
-
-const CATEGORIES: ProductCategory[] = ['Indumentaria', 'Accesorios', 'UV & vinilo', 'Banderas'];
 
 export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   isOpen,
@@ -112,6 +147,31 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     const updated = [...formData.images];
     updated[index] = val;
     setFormData({ ...formData, images: updated });
+  };
+
+  const handleImageFileUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const base64 = await compressAndReadFile(file);
+      handleImageUrlChange(index, base64);
+    } catch (err) {
+      console.error('Error al procesar imagen:', err);
+    }
+  };
+
+  const handleAddNewImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const base64 = await compressAndReadFile(file);
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images.filter((img) => img.trim() !== ''), base64]
+      }));
+    } catch (err) {
+      console.error('Error al procesar imagen:', err);
+    }
   };
 
   const addImageField = () => {
@@ -375,16 +435,28 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="font-bold uppercase tracking-wider text-[#C5C2BA]">
-                Fotografías del Producto (URLs)
+                Fotografías del Producto
               </label>
-              <button
-                type="button"
-                onClick={addImageField}
-                className="text-xs text-[#C8102E] hover:text-[#E01837] font-semibold flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Agregar otra foto</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <label className="text-xs text-[#C8102E] hover:text-[#E01837] font-semibold flex items-center gap-1.5 cursor-pointer bg-[#C8102E]/10 hover:bg-[#C8102E]/20 px-2.5 py-1 rounded-[2px] transition-colors border border-[#C8102E]/30">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Subir foto desde PC</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAddNewImageUpload}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={addImageField}
+                  className="text-xs text-[#888] hover:text-white font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Pegar URL</span>
+                </button>
+              </div>
             </div>
 
             {formData.images.map((imgUrl, i) => (
@@ -397,18 +469,32 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   )}
                 </div>
                 <input
-                  type="url"
+                  type="text"
                   required={i === 0}
                   value={imgUrl}
                   onChange={(e) => handleImageUrlChange(i, e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="Pega enlace de imagen o presiona Subir foto"
                   className="flex-1 bg-[#1C1C1C] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-2 text-xs text-[#F8F7F4] focus:outline-none"
                 />
+                <label
+                  className="px-2.5 py-2 bg-[#252525] hover:bg-[#333] border border-[#444] text-[#DDD] text-xs font-semibold rounded-[2px] cursor-pointer flex items-center gap-1.5 shrink-0"
+                  title="Subir foto desde PC o Celular"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#C8102E]" />
+                  <span className="hidden sm:inline">Subir foto</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageFileUpload(i, e)}
+                  />
+                </label>
                 {formData.images.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeImageField(i)}
-                    className="p-2 text-[#777] hover:text-[#FF6666] transition-colors cursor-pointer"
+                    className="p-2 text-[#777] hover:text-[#FF6666] transition-colors cursor-pointer shrink-0"
+                    title="Eliminar foto"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

@@ -56,24 +56,22 @@ export const Hero: React.FC = () => {
   const currentDragOffsetRef = useRef(0);
   const wasDraggedRef = useRef(false);
 
-  const slides = [
-    {
-      eyebrow: settings.hero?.badge || "INDUMENTARIA + IDENTIDAD",
-      title: (
-        <>
-          {settings.hero?.title || "HACÉ QUE"} <br />
-          <span className="text-[#F8F7F4] underline decoration-[#C8102E] decoration-4 underline-offset-8">
-            {settings.hero?.highlightWord || "TE VEAN."}
-          </span>
-        </>
-      ),
-      copy: settings.hero?.subtitle || "Prendas, accesorios y estampas para equipos que salen a jugar, marcas que quieren hacerse notar y personas que visten lo que creen.",
-      image: settings.hero?.bgImage || "https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?auto=format&fit=crop&w=2000&q=85",
-      primaryCta: settings.hero?.primaryCtaText || "Explorar catálogo"
-    },
-    heroSlides[1],
-    heroSlides[2]
-  ];
+  const slides = settings.hero?.slides && settings.hero.slides.length > 0
+    ? settings.hero.slides.map((s) => ({
+        eyebrow: s.badge,
+        title: (
+          <>
+            {s.title} <br />
+            <span className="text-[#F8F7F4] underline decoration-[#C8102E] decoration-4 underline-offset-8">
+              {s.highlightWord}
+            </span>
+          </>
+        ),
+        copy: s.subtitle,
+        image: s.bgImage,
+        primaryCta: s.primaryCtaText || "Explorar catálogo"
+      }))
+    : heroSlides;
 
   // Auto-play timer that pauses while dragging
   useEffect(() => {
