@@ -18,11 +18,20 @@ export interface HeroSlideConfig {
   primaryCtaText: string;
 }
 
+export interface HeaderNavItem {
+  id: string;
+  label: string;
+  type: 'home' | 'catalog' | 'category' | 'scroll' | 'modal' | 'url';
+  target: string;
+  enabled: boolean;
+}
+
 export interface SiteSettings {
   brandName: string;
   brandShortName: string;
   tagline: string;
   logoUrl: string;
+  headerNav?: HeaderNavItem[];
   announcement: {
     enabled: boolean;
     badge: string;

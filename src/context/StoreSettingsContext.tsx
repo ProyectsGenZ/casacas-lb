@@ -1,8 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { SiteSettings, CategoryConfig } from '../types/settings';
+import { SiteSettings, CategoryConfig, HeaderNavItem } from '../types/settings';
 import { brandConfig } from '../config/brandConfig';
+
+export const defaultHeaderNav: HeaderNavItem[] = [
+  { id: 'nav-home', label: 'Inicio', type: 'home', target: '/', enabled: true },
+  { id: 'nav-tienda', label: 'Tienda', type: 'catalog', target: 'Todos', enabled: true },
+  { id: 'nav-indumentaria', label: 'Indumentaria', type: 'category', target: 'Indumentaria', enabled: true },
+  { id: 'nav-personaliza', label: 'Personalizá', type: 'scroll', target: '#personaliza', enabled: true },
+  { id: 'nav-talles', label: 'Guía de Talles', type: 'modal', target: 'size_guide', enabled: true },
+  { id: 'nav-nosotros', label: 'Sobre Nosotros', type: 'modal', target: 'story', enabled: true }
+];
 
 const defaultCategories: CategoryConfig[] = [
   {
@@ -64,6 +73,7 @@ export const defaultSettings: SiteSettings = {
   brandShortName: brandConfig.shortName,
   tagline: brandConfig.tagline,
   logoUrl: '/media/logo-casacas-oficial.png',
+  headerNav: defaultHeaderNav,
   announcement: {
     enabled: true,
     badge: brandConfig.announcement.badge,
@@ -178,7 +188,8 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
                 ...prev.hero,
                 ...(data.hero || {}),
                 slides: data.hero?.slides && data.hero.slides.length > 0 ? data.hero.slides : defaultSettings.hero.slides
-              }
+              },
+              headerNav: data.headerNav && data.headerNav.length > 0 ? data.headerNav : (prev.headerNav || defaultHeaderNav)
             };
             try {
               localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));

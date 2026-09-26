@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useStoreSettings } from '../../context/StoreSettingsContext';
+import { useStoreSettings, defaultHeaderNav } from '../../context/StoreSettingsContext';
 import { useUI } from '../../context/UIContext';
-import { SiteSettings, CategoryConfig, HeroSlideConfig } from '../../types/settings';
+import { SiteSettings, CategoryConfig, HeroSlideConfig, HeaderNavItem } from '../../types/settings';
 import {
   Store,
   Layers,
@@ -15,7 +15,11 @@ import {
   Upload,
   Image as ImageIcon,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Compass,
+  ArrowUp,
+  ArrowDown,
+  RotateCcw
 } from 'lucide-react';
 
 const compressAndReadFile = (file: File, maxWidth = 1200, maxHeight = 1200): Promise<string> => {
@@ -58,7 +62,7 @@ export const StoreSettingsTab: React.FC = () => {
   const { showToast } = useUI();
 
   const [formData, setFormData] = useState<SiteSettings>(settings);
-  const [activeSection, setActiveSection] = useState<'identity' | 'hero' | 'categories' | 'contact' | 'shipping'>('identity');
+  const [activeSection, setActiveSection] = useState<'identity' | 'navigation' | 'hero' | 'categories' | 'contact' | 'shipping'>('identity');
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -162,6 +166,84 @@ export const StoreSettingsTab: React.FC = () => {
     }
   };
 
+  // Navigation items management
+  const currentNavItems: HeaderNavItem[] = formData.headerNav && formData.headerNav.length > 0
+    ? formData.headerNav
+    : defaultHeaderNav;
+
+  const handleUpdateNavItem = (id: string, field: keyof HeaderNavItem, value: any) => {
+    setFormData((prev) => {
+      const list = prev.headerNav && prev.headerNav.length > 0 ? prev.headerNav : defaultHeaderNav;
+      return {
+        ...prev,
+        headerNav: list.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+      };
+    });
+  };
+
+  const handleToggleNavItem = (id: string) => {
+    setFormData((prev) => {
+      const list = prev.headerNav && prev.headerNav.length > 0 ? prev.headerNav : defaultHeaderNav;
+      return {
+        ...prev,
+        headerNav: list.map((item) => (item.id === id ? { ...item, enabled: !item.enabled } : item))
+      };
+    });
+  };
+
+  const handleMoveNavItem = (index: number, direction: 'up' | 'down') => {
+    setFormData((prev) => {
+      const list = [...(prev.headerNav && prev.headerNav.length > 0 ? prev.headerNav : defaultHeaderNav)];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return { ...prev, headerNav: list };
+    });
+  };
+
+  const handleDeleteNavItem = (id: string, label: string) => {
+    if (window.confirm(`¿Deseas eliminar el botón "${label}" de la cabecera?`)) {
+      setFormData((prev) => {
+        const list = prev.headerNav && prev.headerNav.length > 0 ? prev.headerNav : defaultHeaderNav;
+        return {
+          ...prev,
+          headerNav: list.filter((item) => item.id !== id)
+        };
+      });
+      showToast(`Botón "${label}" eliminado. Guarda los cambios para aplicar.`, 'info');
+    }
+  };
+
+  const handleAddNavItem = () => {
+    const newItem: HeaderNavItem = {
+      id: `nav-${Date.now()}`,
+      label: 'Nuevo Botón',
+      type: 'catalog',
+      target: 'Todos',
+      enabled: true
+    };
+    setFormData((prev) => {
+      const list = prev.headerNav && prev.headerNav.length > 0 ? prev.headerNav : defaultHeaderNav;
+      return {
+        ...prev,
+        headerNav: [...list, newItem]
+      };
+    });
+    showToast('Nuevo botón agregado a la cabecera.', 'success');
+  };
+
+  const handleResetNavItems = () => {
+    if (window.confirm('¿Restablecer los botones de cabecera a los predeterminados de la tienda?')) {
+      setFormData((prev) => ({
+        ...prev,
+        headerNav: defaultHeaderNav
+      }));
+      showToast('Botones de cabecera restablecidos. Recuerda guardar cambios.', 'info');
+    }
+  };
+
   // Save all settings to Firebase
   const handleSaveAll = async () => {
     setIsSaving(true);
@@ -220,6 +302,18 @@ export const StoreSettingsTab: React.FC = () => {
         >
           <Store className="w-4 h-4 text-[#C8102E]" />
           <span>Identidad & Anuncios</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSection('navigation')}
+          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
+            activeSection === 'navigation'
+              ? 'border-[#C8102E] text-white bg-[#181818]'
+              : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
+          }`}
+        >
+          <Compass className="w-4 h-4 text-[#C8102E]" />
+          <span>Botones de Cabecera</span>
         </button>
 
         <button
@@ -380,6 +474,256 @@ export const StoreSettingsTab: React.FC = () => {
                 />
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Botones de Cabecera (Navbar) */}
+      {activeSection === 'navigation' && (
+        <div className="space-y-6">
+          <div className="p-6 bg-[#121212] border border-[#222] rounded-[4px] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#222] pb-4">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-[#C8102E]" />
+                  Botones y Enlaces de la Cabecera
+                </h3>
+                <p className="text-xs text-[#888] mt-1">
+                  Configura los botones que verán tus clientes en el menú de navegación superior. Puedes renombrarlos, ocultarlos, ordenarlos o agregar nuevos accesos (como TIENDA, CATÁLOGO, etc.).
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleResetNavItems}
+                  className="px-3 py-1.5 bg-[#1C1C1C] hover:bg-[#252525] border border-[#333] text-xs font-semibold text-[#BBB] hover:text-white rounded-[2px] transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Restablecer los botones por defecto"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Restablecer</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddNavItem}
+                  className="px-3.5 py-1.5 bg-[#C8102E] hover:bg-[#E01837] text-white text-xs font-bold uppercase tracking-wider rounded-[2px] transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Agregar Botón</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Live Visual Preview */}
+            <div className="p-4 bg-[#0E0E0E] border border-[#262626] rounded-[4px] space-y-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#777] block">
+                Vista previa en tiempo real de la barra de navegación:
+              </span>
+              <div className="flex items-center gap-4 overflow-x-auto py-2.5 px-3 bg-[#141414] border border-[#202020] rounded-[2px]">
+                <div className="text-[10px] font-mono px-2 py-0.5 bg-[#222] text-[#888] rounded shrink-0">
+                  LOGO
+                </div>
+                {currentNavItems.map((item) => (
+                  <span
+                    key={item.id}
+                    className={`text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded transition-colors whitespace-nowrap ${
+                      item.enabled
+                        ? 'text-white border-b-2 border-[#C8102E]'
+                        : 'text-[#444] line-through opacity-50'
+                    }`}
+                  >
+                    {item.label || 'Sin título'}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* List of Navigation Buttons */}
+            <div className="space-y-3 pt-2">
+              {currentNavItems.map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`p-4 rounded-[4px] border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                    item.enabled
+                      ? 'bg-[#181818] border-[#2E2E2E]'
+                      : 'bg-[#141414] border-[#222] opacity-65'
+                  }`}
+                >
+                  {/* Left: Reorder & Number & Toggle */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        disabled={index === 0}
+                        onClick={() => handleMoveNavItem(index, 'up')}
+                        className="p-1 text-[#666] hover:text-white disabled:opacity-20 transition-colors cursor-pointer"
+                        title="Mover arriba"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={index === currentNavItems.length - 1}
+                        onClick={() => handleMoveNavItem(index, 'down')}
+                        className="p-1 text-[#666] hover:text-white disabled:opacity-20 transition-colors cursor-pointer"
+                        title="Mover abajo"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <span className="w-6 h-6 rounded bg-[#202020] border border-[#333] text-[11px] font-mono font-bold text-[#AAA] flex items-center justify-center shrink-0">
+                      {index + 1}
+                    </span>
+
+                    {/* Enable / Disable Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleNavItem(item.id)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-[2px] border transition-all flex items-center gap-1.5 cursor-pointer ${
+                        item.enabled
+                          ? 'bg-emerald-950/60 border-emerald-700/60 text-emerald-400'
+                          : 'bg-[#222] border-[#333] text-[#777]'
+                      }`}
+                      title={item.enabled ? 'Click para ocultar de la cabecera' : 'Click para mostrar en la cabecera'}
+                    >
+                      {item.enabled ? (
+                        <>
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Visible</span>
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="w-3.5 h-3.5" />
+                          <span>Oculto</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Center: Label input & Action Selector */}
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {/* Label Input */}
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-[#888] mb-1">
+                        Texto del Botón
+                      </label>
+                      <input
+                        type="text"
+                        value={item.label}
+                        onChange={(e) => handleUpdateNavItem(item.id, 'label', e.target.value)}
+                        placeholder="Ej: TIENDA"
+                        className="w-full bg-[#121212] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-1.5 text-xs text-white focus:outline-none font-bold"
+                      />
+                    </div>
+
+                    {/* Action Type */}
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-[#888] mb-1">
+                        Acción al hacer clic
+                      </label>
+                      <select
+                        value={item.type}
+                        onChange={(e) => {
+                          const newType = e.target.value as any;
+                          let defaultTarget = '/';
+                          if (newType === 'catalog') defaultTarget = 'Todos';
+                          if (newType === 'category') defaultTarget = formData.categories[0]?.slug || 'Indumentaria';
+                          if (newType === 'scroll') defaultTarget = '#personaliza';
+                          if (newType === 'modal') defaultTarget = 'size_guide';
+                          if (newType === 'url') defaultTarget = 'https://';
+                          handleUpdateNavItem(item.id, 'type', newType);
+                          handleUpdateNavItem(item.id, 'target', defaultTarget);
+                        }}
+                        className="w-full bg-[#121212] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-1.5 text-xs text-white focus:outline-none"
+                      >
+                        <option value="home">Ir al Inicio (/)</option>
+                        <option value="catalog">Ir a Tienda / Catálogo</option>
+                        <option value="category">Filtrar por Categoría</option>
+                        <option value="scroll">Desplazar a Sección (#)</option>
+                        <option value="modal">Abrir Ventana / Modal</option>
+                        <option value="url">Enlace Web Externo</option>
+                      </select>
+                    </div>
+
+                    {/* Target Selector / Input */}
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-[#888] mb-1">
+                        Destino / Parámetro
+                      </label>
+                      {item.type === 'category' ? (
+                        <select
+                          value={item.target}
+                          onChange={(e) => handleUpdateNavItem(item.id, 'target', e.target.value)}
+                          className="w-full bg-[#121212] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-1.5 text-xs text-white focus:outline-none"
+                        >
+                          {formData.categories.map((c) => (
+                            <option key={c.id} value={c.slug}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : item.type === 'modal' ? (
+                        <select
+                          value={item.target}
+                          onChange={(e) => handleUpdateNavItem(item.id, 'target', e.target.value)}
+                          className="w-full bg-[#121212] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-1.5 text-xs text-white focus:outline-none"
+                        >
+                          <option value="size_guide">Guía de Talles y Medidas</option>
+                          <option value="story">Sobre Nosotros / Historia</option>
+                        </select>
+                      ) : item.type === 'scroll' ? (
+                        <select
+                          value={item.target}
+                          onChange={(e) => handleUpdateNavItem(item.id, 'target', e.target.value)}
+                          className="w-full bg-[#121212] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-1.5 text-xs text-white focus:outline-none"
+                        >
+                          <option value="#personaliza">#personaliza (Diseño Equipos)</option>
+                          <option value="#resenas">#resenas (Opiniones Clientes)</option>
+                          <option value="#local">#local (Ubicación Taller)</option>
+                          <option value="#contacto">#contacto (Redes y Contacto)</option>
+                        </select>
+                      ) : item.type === 'catalog' ? (
+                        <input
+                          type="text"
+                          disabled
+                          value="Todos los productos (Catálogo)"
+                          className="w-full bg-[#121212]/50 border border-[#282828] rounded-[2px] px-3 py-1.5 text-xs text-[#888]"
+                        />
+                      ) : item.type === 'home' ? (
+                        <input
+                          type="text"
+                          disabled
+                          value="Página Principal (/)"
+                          className="w-full bg-[#121212]/50 border border-[#282828] rounded-[2px] px-3 py-1.5 text-xs text-[#888]"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={item.target}
+                          onChange={(e) => handleUpdateNavItem(item.id, 'target', e.target.value)}
+                          placeholder="https://..."
+                          className="w-full bg-[#121212] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-1.5 text-xs text-white focus:outline-none"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right: Delete button */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteNavItem(item.id, item.label)}
+                      className="p-2 text-[#666] hover:text-[#C8102E] transition-colors rounded cursor-pointer"
+                      title="Eliminar botón"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
           </div>
         </div>
       )}
