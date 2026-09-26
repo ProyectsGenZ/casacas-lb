@@ -300,7 +300,7 @@ export const Hero: React.FC = () => {
               </div>
               <div className="hidden sm:flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#C8102E] shrink-0"></span>
-                <span>{settings.shipping?.deliveryEnabled ? 'Envíos a todo el país' : 'Retiro en local Las Breñas'}</span>
+                <span>Retiro en local Las Breñas</span>
               </div>
             </div>
 

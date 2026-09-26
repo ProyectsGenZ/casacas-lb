@@ -831,7 +831,7 @@ export const StoreSettingsTab: React.FC = () => {
                   Modalidad de Entrega y Envíos
                 </h3>
                 <p className="text-xs text-[#888] mt-1">
-                  Controla si aceptas envíos a domicilio a todo el país o si la tienda opera únicamente con retiros por el taller.
+                  Controla si aceptas envíos a domicilio o si la tienda opera únicamente con retiros por el local.
                 </p>
               </div>
 
@@ -867,7 +867,7 @@ export const StoreSettingsTab: React.FC = () => {
                 <Truck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                 <div className="text-xs text-emerald-200/90">
                   <p className="font-bold text-emerald-300">
-                    Envíos a Domicilio Habilitados a Todo el País
+                    Envíos a Domicilio Habilitados
                   </p>
                   <p>
                     Se cobrará el costo de envío estándar o se bonificará automáticamente si la compra supera el monto mínimo configurado.

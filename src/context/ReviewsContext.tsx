@@ -120,7 +120,7 @@ export const ReviewsProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     return {
       success: true,
-      message: '¡Gracias por compartir tu opinión! Tu reseña ha sido enviada y será publicada en la web una vez que nuestro equipo la verifique.'
+      message: '¡Gracias por compartir tu opinión! Tu reseña ha sido enviada con éxito.'
     };
   };
 

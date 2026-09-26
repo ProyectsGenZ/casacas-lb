@@ -1,13 +1,13 @@
 import React from 'react';
-import { Truck, RotateCcw, ShieldCheck, MessageSquare } from 'lucide-react';
+import { MapPin, RotateCcw, ShieldCheck, MessageSquare } from 'lucide-react';
 import { brandConfig } from '../../config/brandConfig';
 
 export const ValueProps: React.FC = () => {
   const benefits = [
     {
-      icon: Truck,
-      title: 'Envíos a todo el país',
-      description: `Despachamos tu pedido por Andreani o Correo Argentino con código de seguimiento en tiempo real. Envío gratis superando los $80.000.`
+      icon: MapPin,
+      title: 'Retiro en local Las Breñas',
+      description: 'Preparación ágil de tus prendas para retirar directamente sin costo por nuestro local comercial en Las Breñas, Chaco.'
     },
     {
       icon: RotateCcw,

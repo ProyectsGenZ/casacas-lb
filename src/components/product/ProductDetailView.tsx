@@ -11,7 +11,7 @@ import { ProductColor } from '../../types';
 import {
   Heart,
   Ruler,
-  Truck,
+  MapPin,
   RotateCcw,
   ShieldCheck,
   Plus,
@@ -85,7 +85,7 @@ export const ProductDetailView: React.FC = () => {
 
   // WhatsApp consultation
   const waConsultationUrl = `https://wa.me/${brandConfig.contact.whatsapp}?text=${encodeURIComponent(
-    `Hola Leo, quiero consultar por ${quantity} unidad(es) de ${selectedProduct.name} (SKU: ${selectedProduct.sku})${
+    `Hola Leo, quiero consultar por ${quantity} unidad(es) de ${selectedProduct.name}${
       isCustomVersion ? ' con personalización' : ' versión base'
     }.`
   )}`;
@@ -103,7 +103,6 @@ export const ProductDetailView: React.FC = () => {
       content: (
         <div className="space-y-3 text-xs leading-relaxed">
           <p>{selectedProduct.description}</p>
-          <p><strong className="text-white">Código SKU:</strong> <span className="font-mono text-[#C8102E]">{selectedProduct.sku}</span></p>
           {selectedProduct.material && <p><strong className="text-white">Material:</strong> {selectedProduct.material}</p>}
           {selectedProduct.composition && <p><strong className="text-white">Composición:</strong> {selectedProduct.composition}</p>}
           {selectedProduct.fit && <p><strong className="text-white">Calce / Formato:</strong> {selectedProduct.fit}</p>}
@@ -134,17 +133,17 @@ export const ProductDetailView: React.FC = () => {
     },
     {
       id: 'shipping',
-      title: 'Retiro en Las Breñas y Envíos',
+      title: 'Modalidad de Entrega y Retiro',
       content: (
         <div className="space-y-2 text-xs leading-relaxed">
           <p>
-            <strong className="text-white">Retiro gratuito en el local:</strong> Av. General Jones (entre Mercante y Gral. Vedia), Las Breñas, Chaco.
+            <strong className="text-white">Retiro gratuito en nuestro local:</strong> Av. General Jones (entre Mercante y Gral. Vedia), Las Breñas, Chaco.
           </p>
           <p>
-            <strong className="text-white">Envíos a todo el país:</strong> Por Andreani y Correo Argentino con código de seguimiento online. Gratis en compras superiores a $80.000.
+            <strong className="text-white">Coordinación de entrega:</strong> Una vez confirmado tu pedido, te avisamos de inmediato por WhatsApp para que pases a retirarlo cuando te quede más cómodo.
           </p>
           <p>
-            <strong className="text-white">Tiempo de producción:</strong> Para prendas personalizadas o lotes grupales, coordinamos la fecha exacta de entrega de forma previa.
+            <strong className="text-white">Tiempo de producción:</strong> Para prendas personalizadas o pedidos en cantidad, coordinamos la fecha exacta de entrega de forma previa.
           </p>
         </div>
       )
@@ -158,7 +157,7 @@ export const ProductDetailView: React.FC = () => {
         {/* Back Link */}
         <button
           onClick={() => navigateToCatalog(selectedProduct.category)}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#9E9D99] hover:text-white mb-8 transition-colors focus-ring"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#9E9D99] hover:text-white mb-8 transition-colors focus-ring cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 text-[#C8102E]" />
           <span>Volver a {selectedProduct.category}</span>
@@ -176,11 +175,8 @@ export const ProductDetailView: React.FC = () => {
                 className="w-full h-full object-cover object-center"
               />
 
-              {/* Tag / SKU */}
+              {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-1.5">
-                <Badge variant="dark" className="font-mono">
-                  SKU: {selectedProduct.sku}
-                </Badge>
                 {selectedProduct.customizable && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[#C8102E] text-white rounded-[2px]">
                     <Sparkles className="w-3 h-3" />
@@ -446,22 +442,37 @@ export const ProductDetailView: React.FC = () => {
               </div>
 
               {/* Direct WhatsApp Consultation */}
-              <a
-                href={waConsultationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full h-12 bg-[#1F1F1F] hover:bg-[#282828] border border-[#333] text-[#F8F7F4] font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-2 focus-ring"
-              >
-                <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                <span>Consultar por WhatsApp con Leo</span>
-              </a>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <a
+                  href={waConsultationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-12 bg-[#1F1F1F] hover:bg-[#282828] border border-[#333] text-[#F8F7F4] font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-2 focus-ring"
+                >
+                  <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                  <span>Consultar por WhatsApp</span>
+                </a>
+
+                {/* Direct Wholesale Consultation */}
+                <a
+                  href={`https://wa.me/${brandConfig.contact.whatsapp}?text=${encodeURIComponent(
+                    `Hola Leo! Me gustaría consultar precio mayorista para comprar en cantidad el producto: ${selectedProduct.name}.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-12 bg-[#1A1812] hover:bg-[#252219] border border-[#D4AF37]/60 hover:border-[#D4AF37] text-[#D4AF37] hover:text-[#FFF] font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-2 focus-ring shadow-sm"
+                >
+                  <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                  <span>Consultar Mayorista</span>
+                </a>
+              </div>
             </div>
 
             {/* Trust Points */}
             <div className="pt-4 border-t border-[#222] space-y-2.5 text-xs text-[#9E9D99]">
               <div className="flex items-center gap-2">
-                <Truck className="w-4 h-4 text-[#C8102E] shrink-0" />
-                <span>Retiro en Las Breñas sin cargo o envíos a todo el país</span>
+                <MapPin className="w-4 h-4 text-[#C8102E] shrink-0" />
+                <span>Retiro en nuestro local comercial en Las Breñas sin cargo</span>
               </div>
               <div className="flex items-center gap-2">
                 <RotateCcw className="w-4 h-4 text-[#C8102E] shrink-0" />

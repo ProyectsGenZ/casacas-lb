@@ -50,7 +50,7 @@ export const LocalSection: React.FC = () => {
 
             <div className="p-4 bg-[#181818] border border-[#242424] rounded-[2px] flex items-center gap-3 text-xs text-[#9E9D99]">
               <ShieldCheck className="w-5 h-5 text-[#C8102E] shrink-0" />
-              <span>Retiro inmediato en el local sin costo de flete. Envíos coordinados a toda la provincia y el país.</span>
+              <span>Retiro inmediato en nuestro local comercial sin costo adicional en Las Breñas, Chaco.</span>
             </div>
           </div>
 

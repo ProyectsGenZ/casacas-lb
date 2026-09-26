@@ -37,7 +37,7 @@ export const brandConfig: BrandConfig = {
   location: "Las Breñas, Chaco, Argentina",
   announcement: {
     badge: "RETIRO EN LAS BREÑAS",
-    text: "Consultas y pedidos personalizados por WhatsApp • +54 9 3735 549290 • Envíos a todo el país",
+    text: "Consultas y pedidos personalizados por WhatsApp • +54 9 3735 549290 • Retiro exclusivo en local comercial",
     linkText: "Escribir a Leo ↗"
   },
   freeShippingThreshold: 80000,

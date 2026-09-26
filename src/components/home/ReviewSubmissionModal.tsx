@@ -3,14 +3,14 @@ import { useReviews } from '../../context/ReviewsContext';
 import { useUI } from '../../context/UIContext';
 import { auth, googleProvider } from '../../config/firebase';
 import { signInWithPopup } from 'firebase/auth';
-import { X, Star, Upload, CheckCircle2, ShieldCheck, Image as ImageIcon, User, Trash2 } from 'lucide-react';
+import { X, Star, Upload, CheckCircle2, Image as ImageIcon, User, Trash2 } from 'lucide-react';
 
 interface ReviewSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const compressAndReadFile = (file: File, maxWidth = 1000, maxHeight = 1000): Promise<string> => {
+const compressAndReadFile = (file: File, maxWidth = 800, maxHeight = 800): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -36,7 +36,7 @@ const compressAndReadFile = (file: File, maxWidth = 1000, maxHeight = 1000): Pro
         elem.height = height;
         const ctx = elem.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        const dataUrl = elem.toDataURL('image/jpeg', 0.82);
+        const dataUrl = elem.toDataURL('image/jpeg', 0.7);
         resolve(dataUrl);
       };
       img.onerror = (err) => reject(err);
@@ -165,7 +165,7 @@ export const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ is
               ¡Opinión Enviada con Éxito!
             </h3>
             <p className="text-xs sm:text-sm text-[#AAA] leading-relaxed max-w-sm mx-auto">
-              Muchas gracias por tu tiempo. Tu reseña ha entrado en la bandeja de verificación del taller de <strong>CASACAS LB</strong> y será aprobada a la brevedad.
+              Muchas gracias por tu tiempo y por compartir tu experiencia con nosotros.
             </p>
             <button
               onClick={onClose}
@@ -176,14 +176,6 @@ export const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ is
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            
-            {/* Moderation Info Alert */}
-            <div className="p-3 bg-[#1A1616] border border-[#3E2020] rounded-[2px] flex items-start gap-2.5 text-xs text-[#C5C2BA]">
-              <ShieldCheck className="w-4 h-4 text-[#C8102E] shrink-0 mt-0.5" />
-              <span>
-                Para garantizar autenticidad y evitar spam, todas las reseñas son <strong>moderadas por nuestro equipo</strong> antes de publicarse en la web.
-              </span>
-            </div>
 
             {/* Star Rating Selector */}
             <div className="space-y-1.5">
@@ -334,7 +326,7 @@ export const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ is
                   </div>
                   <div className="flex-1 text-xs text-[#AAA]">
                     <span className="text-emerald-400 font-bold block">✓ Foto adjunta lista</span>
-                    <span className="text-[10px] text-[#777]">Se mostrará en tu reseña tras la aprobación</span>
+                    <span className="text-[10px] text-[#777]">Foto adjuntada correctamente</span>
                   </div>
                   <button
                     type="button"
@@ -376,7 +368,7 @@ export const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ is
                 {isSubmitting ? (
                   <span>Enviando...</span>
                 ) : (
-                  <span>Enviar para Moderación</span>
+                  <span>Enviar Opinión</span>
                 )}
               </button>
             </div>

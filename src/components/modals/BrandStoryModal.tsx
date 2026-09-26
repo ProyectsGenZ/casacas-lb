@@ -57,7 +57,7 @@ export const BrandStoryModal: React.FC = () => {
             Desde nuestro taller y local en <strong className="text-white">Las Breñas, Chaco</strong>, combinamos la estética deportiva retro con la silueta del streetwear urbano moderno. Cada casaca, buzo y prenda que producimos está pensada para resistir el uso real, sin atajos en materiales ni costuras flojas.
           </p>
           <p>
-            Creemos en la producción responsable, el trato directo con cada persona que nos elige y el orgullo de fabricar indumentaria con identidad federal que llega a todo el país.
+            Creemos en la producción responsable, el trato directo con cada persona que nos elige y el orgullo de fabricar indumentaria con identidad federal desde Las Breñas para toda la región.
           </p>
         </div>
 

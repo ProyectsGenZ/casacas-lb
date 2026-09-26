@@ -151,8 +151,8 @@ export const Footer: React.FC = () => {
             </h3>
             <div className="space-y-3 text-xs text-[#8E8C86]">
               <div className="flex items-start gap-2.5">
-                <Truck className="w-4 h-4 text-[#C8102E] shrink-0 mt-0.5" />
-                <span>Retiro en Las Breñas o envíos a todo el país vía Andreani y Correo Argentino.</span>
+                <MapPin className="w-4 h-4 text-[#C8102E] shrink-0 mt-0.5" />
+                <span>Retiro exclusivo en nuestro local comercial en Las Breñas, Chaco.</span>
               </div>
               <div className="flex items-start gap-2.5">
                 <RotateCcw className="w-4 h-4 text-[#C8102E] shrink-0 mt-0.5" />

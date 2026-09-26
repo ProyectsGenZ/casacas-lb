@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Product, ProductCategory, OfferType, ProductOffer } from '../../types';
+import { Product, ProductCategory, OfferType, ProductOffer, ProductColor } from '../../types';
 import { X, Image as ImageIcon, Save, Plus, Trash2, Upload, Flame, Sparkles } from 'lucide-react';
 
 const compressAndReadFile = (file: File, maxWidth = 1000, maxHeight = 1000): Promise<string> => {
@@ -77,8 +77,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     fit: '',
     material: '',
     images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=1000&q=80'],
-    sizes: ['S', 'M', 'L', 'XL'] as ('S' | 'M' | 'L' | 'XL' | 'XXL' | 'Único')[]
+    sizes: ['S', 'M', 'L', 'XL'] as ('S' | 'M' | 'L' | 'XL' | 'XXL' | 'Único')[],
+    colors: [
+      { name: 'Negro Carbón', hex: '#1C1C1C' },
+      { name: 'Rojo Señal', hex: '#C8102E' }
+    ] as ProductColor[]
   });
+
+  const [newColorName, setNewColorName] = useState('');
+  const [newColorHex, setNewColorHex] = useState('#1C1C1C');
 
   useEffect(() => {
     if (initialProduct) {
@@ -106,7 +113,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         fit: initialProduct.fit || '',
         material: initialProduct.material || '',
         images: initialProduct.images.length > 0 ? initialProduct.images : [''],
-        sizes: initialProduct.sizes || ['Único']
+        sizes: initialProduct.sizes || ['Único'],
+        colors: initialProduct.colors && initialProduct.colors.length > 0
+          ? initialProduct.colors
+          : [
+              { name: 'Negro Carbón', hex: '#1C1C1C' },
+              { name: 'Rojo Señal', hex: '#C8102E' }
+            ]
       });
     } else {
       // Default new product values
@@ -133,7 +146,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         fit: 'Regular fit',
         material: '100% Algodón peinado 24/1',
         images: ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=80'],
-        sizes: ['S', 'M', 'L', 'XL']
+        sizes: ['S', 'M', 'L', 'XL'],
+        colors: [
+          { name: 'Negro Carbón', hex: '#1C1C1C' },
+          { name: 'Rojo Señal', hex: '#C8102E' }
+        ]
       });
     }
   }, [initialProduct, isOpen]);
@@ -197,7 +214,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       stock: stockNum,
       minQuantity: Math.max(1, Number(formData.minQuantity)),
       images: formData.images.filter((img) => img.trim() !== ''),
-      colors: initialProduct?.colors || [
+      colors: formData.colors.length > 0 ? formData.colors : [
         { name: 'Negro Carbón', hex: '#1C1C1C' },
         { name: 'Rojo Señal', hex: '#C8102E' }
       ]
@@ -258,6 +275,33 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     } else {
       setFormData({ ...formData, sizes: [...formData.sizes, size] });
     }
+  };
+
+  const handleAddColor = () => {
+    const nameTrimmed = newColorName.trim();
+    if (!nameTrimmed) return;
+    if (formData.colors.some((c) => c.name.toLowerCase() === nameTrimmed.toLowerCase())) return;
+    setFormData({
+      ...formData,
+      colors: [...formData.colors, { name: nameTrimmed, hex: newColorHex }]
+    });
+    setNewColorName('');
+  };
+
+  const handleRemoveColor = (index: number) => {
+    if (formData.colors.length <= 1) return;
+    setFormData({
+      ...formData,
+      colors: formData.colors.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleQuickColorAdd = (name: string, hex: string) => {
+    if (formData.colors.some((c) => c.name.toLowerCase() === name.toLowerCase())) return;
+    setFormData({
+      ...formData,
+      colors: [...formData.colors, { name, hex }]
+    });
   };
 
   return (
@@ -644,6 +688,120 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Colors Management Section */}
+          <div className="p-4 bg-[#181818] border border-[#2A2A2A] rounded-[2px] space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block font-bold uppercase tracking-wider text-[#C5C2BA] text-xs">
+                  Colores Ofrecidos para este Producto
+                </label>
+                <p className="text-[11px] text-[#888] mt-0.5">
+                  El cliente podrá seleccionar entre estos colores al comprar.
+                </p>
+              </div>
+              <span className="text-[11px] font-mono text-[#AAA]">
+                {formData.colors.length} {formData.colors.length === 1 ? 'color' : 'colores'}
+              </span>
+            </div>
+
+            {/* Current colors list */}
+            <div className="flex flex-wrap gap-2.5">
+              {formData.colors.map((c, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-[#121212] border border-[#333] rounded-[2px] text-xs"
+                >
+                  <span
+                    className="w-3.5 h-3.5 rounded-full border border-[#555] shrink-0"
+                    style={{ backgroundColor: c.hex }}
+                  />
+                  <span className="text-white font-medium">{c.name}</span>
+                  <span className="text-[10px] text-[#666] font-mono">{c.hex}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveColor(idx)}
+                    className="ml-1 text-[#666] hover:text-[#C8102E] transition-colors cursor-pointer"
+                    title="Quitar color"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick add common colors */}
+            <div className="space-y-1.5 pt-2 border-t border-[#262626]">
+              <span className="text-[10px] uppercase font-mono tracking-wider text-[#777]">
+                Paleta Rápida (Clic para añadir):
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { name: 'Negro Carbón', hex: '#1C1C1C' },
+                  { name: 'Blanco Puro', hex: '#FFFFFF' },
+                  { name: 'Rojo Señal', hex: '#C8102E' },
+                  { name: 'Azul Marino', hex: '#0B1B3D' },
+                  { name: 'Azul Francia', hex: '#0047AB' },
+                  { name: 'Gris Melange', hex: '#8C8C8C' },
+                  { name: 'Verde Militar', hex: '#3E4F3E' },
+                  { name: 'Amarillo', hex: '#FFD700' },
+                  { name: 'Bordó', hex: '#58111A' },
+                  { name: 'Rosa Pastel', hex: '#E8A598' }
+                ].map((preset) => {
+                  const alreadyAdded = formData.colors.some((c) => c.name.toLowerCase() === preset.name.toLowerCase());
+                  return (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      disabled={alreadyAdded}
+                      onClick={() => handleQuickColorAdd(preset.name, preset.hex)}
+                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-[2px] border text-[11px] transition-colors cursor-pointer ${
+                        alreadyAdded
+                          ? 'border-[#222] bg-[#141414] text-[#555] opacity-50 cursor-not-allowed'
+                          : 'border-[#333] bg-[#181818] text-[#CCC] hover:border-[#666] hover:text-white'
+                      }`}
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full border border-[#444]" style={{ backgroundColor: preset.hex }} />
+                      <span>{preset.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom color adder */}
+            <div className="pt-2 border-t border-[#262626]">
+              <span className="text-[10px] uppercase font-mono tracking-wider text-[#777] block mb-2">
+                O crear color personalizado:
+              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <input
+                  type="text"
+                  placeholder="Nombre (ej: Verde Flúor)"
+                  value={newColorName}
+                  onChange={(e) => setNewColorName(e.target.value)}
+                  className="bg-[#121212] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-1.5 text-xs text-white focus:outline-none flex-1 min-w-[150px]"
+                />
+                <div className="flex items-center gap-1.5 bg-[#121212] border border-[#333] px-2 py-1 rounded-[2px]">
+                  <input
+                    type="color"
+                    value={newColorHex}
+                    onChange={(e) => setNewColorHex(e.target.value)}
+                    className="w-6 h-6 border-0 bg-transparent cursor-pointer rounded"
+                  />
+                  <span className="text-[11px] font-mono text-[#AAA]">{newColorHex}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddColor}
+                  disabled={!newColorName.trim()}
+                  className="px-3.5 py-1.5 bg-[#252525] hover:bg-[#333] border border-[#444] text-white text-xs font-semibold rounded-[2px] transition-colors cursor-pointer disabled:opacity-40"
+                >
+                  + Agregar Color
+                </button>
+              </div>
             </div>
           </div>
 

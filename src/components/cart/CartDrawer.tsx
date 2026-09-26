@@ -134,7 +134,7 @@ export const CartDrawer: React.FC = () => {
                 <span className="flex items-center gap-1.5 text-[#E0DDD5] font-medium">
                   <Truck className="w-3.5 h-3.5 text-[#C8102E]" />
                   {remainingForFreeShipping === 0 ? (
-                    <strong className="text-[#4CAF50]">¡Tenés ENVÍO GRATIS a todo el país!</strong>
+                    <strong className="text-[#4CAF50]">¡Tenés ENVÍO BONIFICADO!</strong>
                   ) : (
                     <span>
                       Te faltan <strong className="text-white">{formatPrice(remainingForFreeShipping)}</strong> para envío gratis

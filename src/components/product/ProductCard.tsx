@@ -4,7 +4,7 @@ import { useUI } from '../../context/UIContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { brandConfig } from '../../config/brandConfig';
-import { Heart, Plus, Check, Sparkles, Flame } from 'lucide-react';
+import { Heart, Plus, Check, Sparkles, Flame, MessageCircle } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 interface ProductCardProps {
@@ -66,11 +66,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           loading="lazy"
         />
 
-        {/* Badges / SKU */}
+        {/* Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
-          <Badge variant="dark" className="font-mono text-[10px]">
-            {product.sku}
-          </Badge>
           {product.offer?.active && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[#C8102E] text-white rounded-[2px] shadow-md shadow-[#C8102E]/30">
               <Flame className="w-2.5 h-2.5 fill-current" />
@@ -181,6 +178,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <strong className="text-white font-mono">{formatMoney(product.priceWholesale)}</strong>
             </div>
           ) : null}
+
+          {/* Wholesale WhatsApp consultation */}
+          <a
+            href={`https://wa.me/${brandConfig.contact.whatsapp}?text=${encodeURIComponent(
+              `Hola Leo! Me gustaría consultar precio mayorista para comprar en cantidad el producto: ${product.name}.`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="mt-2.5 w-full py-2 px-2.5 bg-[#161410] hover:bg-[#221D12] border border-[#3A3018] hover:border-[#D4AF37] text-[#D4AF37] text-[10.5px] font-bold uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+            title={`Consultar presupuesto por mayor para ${product.name}`}
+          >
+            <MessageCircle className="w-3.5 h-3.5 text-[#25D366] shrink-0" />
+            <span>Consultar Precio Mayorista</span>
+          </a>
         </div>
 
       </div>
