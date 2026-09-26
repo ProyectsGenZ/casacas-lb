@@ -77,10 +77,21 @@ export const Hero: React.FC = () => {
   const [withTransition, setWithTransition] = useState(true);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const currentDragOffsetRef = useRef(0);
   const wasDraggedRef = useRef(false);
   const isTransitioningRef = useRef(false);
+
+  // Re-arm transitions after silent repositioning
+  useEffect(() => {
+    if (!withTransition) {
+      const id = requestAnimationFrame(() => {
+        setWithTransition(true);
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [withTransition]);
 
   // Active logical slide index (0 to count - 1)
   const activeSlideIndex = count > 1 ? (trackIndex - 1 + count) % count : 0;
@@ -108,28 +119,31 @@ export const Hero: React.FC = () => {
   };
 
   // Seamless jump without reverse animation on clone boundary
-  const handleTransitionEnd = () => {
+  const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return;
     isTransitioningRef.current = false;
     if (count <= 1) return;
 
+    const trackEl = trackRef.current;
+
     if (trackIndex === count + 1) {
       // Reached the clone of slide 1 at end -> jump silently to real slide 1
+      if (trackEl) {
+        trackEl.style.transition = 'none';
+        trackEl.style.transform = 'translateX(-100%)';
+        void trackEl.offsetHeight; // Synchronous reflow: commits new position without reverse animation
+      }
       setWithTransition(false);
       setTrackIndex(1);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setWithTransition(true);
-        });
-      });
     } else if (trackIndex === 0) {
       // Reached the clone of last slide at start -> jump silently to real last slide
+      if (trackEl) {
+        trackEl.style.transition = 'none';
+        trackEl.style.transform = `translateX(-${count * 100}%)`;
+        void trackEl.offsetHeight; // Synchronous reflow
+      }
       setWithTransition(false);
       setTrackIndex(count);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setWithTransition(true);
-        });
-      });
     }
   };
 
@@ -193,6 +207,7 @@ export const Hero: React.FC = () => {
       >
         {/* Background Editorial Images Track with Real Infinite Loop */}
         <div
+          ref={trackRef}
           className="absolute inset-0 z-0 flex h-full pointer-events-none"
           onTransitionEnd={handleTransitionEnd}
           style={{

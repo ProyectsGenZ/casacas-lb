@@ -175,9 +175,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               </span>
             )}
           </div>
-          <p className="text-[11px] text-[#8E8B84] font-medium mt-0.5">
-            {brandConfig.installmentsCount} cuotas de {formatMoney(Math.round(product.price / brandConfig.installmentsCount))}
-          </p>
+          {product.priceWholesale ? (
+            <div className="mt-1.5 flex items-center justify-between text-[11px] bg-[#171511] border border-[#3E3218] px-2 py-0.5 rounded-[2px]">
+              <span className="text-[#D4AF37] font-semibold">Mayorista ({product.wholesaleMinUnits || 10}+ u.):</span>
+              <strong className="text-white font-mono">{formatMoney(product.priceWholesale)}</strong>
+            </div>
+          ) : null}
         </div>
 
       </div>

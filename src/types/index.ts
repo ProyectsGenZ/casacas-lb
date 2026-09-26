@@ -36,6 +36,8 @@ export interface Product {
   price: number; // priceBase or discounted price
   priceBase: number;
   priceCustom: number | null;
+  priceWholesale?: number;
+  wholesaleMinUnits?: number;
   minQuantity: number;
   sku: string;
   customizable: boolean;

@@ -60,6 +60,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     category: 'Indumentaria' as ProductCategory,
     priceBase: 8500,
     priceCustom: '' as string | number,
+    priceWholesale: '' as string | number,
+    wholesaleMinUnits: 10,
     stock: 20,
     minQuantity: 1,
     customizable: false,
@@ -87,6 +89,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         category: initialProduct.category,
         priceBase: basePrice,
         priceCustom: initialProduct.priceCustom ?? '',
+        priceWholesale: initialProduct.priceWholesale ?? '',
+        wholesaleMinUnits: initialProduct.wholesaleMinUnits ?? 10,
         stock: initialProduct.stock ?? 15,
         minQuantity: initialProduct.minQuantity || 1,
         customizable: initialProduct.customizable,
@@ -112,6 +116,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         category: 'Indumentaria',
         priceBase: 8500,
         priceCustom: '',
+        priceWholesale: '',
+        wholesaleMinUnits: 10,
         stock: 25,
         minQuantity: 1,
         customizable: false,
@@ -172,11 +178,20 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       };
     }
 
+    const priceWholesaleNum = formData.priceWholesale !== '' && Number(formData.priceWholesale) > 0
+      ? Number(formData.priceWholesale)
+      : undefined;
+    const wholesaleMinUnitsNum = priceWholesaleNum
+      ? Math.max(2, Number(formData.wholesaleMinUnits) || 10)
+      : undefined;
+
     const finalProduct = {
       ...formData,
       price: finalPrice,
       priceBase: priceBaseNum,
       priceCustom: priceCustomNum,
+      priceWholesale: priceWholesaleNum,
+      wholesaleMinUnits: wholesaleMinUnitsNum,
       originalPrice: originalPriceVal,
       offer: offerObj,
       stock: stockNum,
@@ -398,6 +413,44 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   onChange={(e) => setFormData({ ...formData, minQuantity: Number(e.target.value) })}
                   className="w-full bg-[#121212] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-2 text-sm font-mono text-[#F8F7F4] focus:outline-none"
                 />
+              </div>
+            </div>
+
+            {/* Wholesale Pricing Tier */}
+            <div className="pt-3 border-t border-[#262626]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#D4AF37]">
+                  Tarifa Mayorista (Venta por Cantidad)
+                </span>
+                <span className="text-[10px] text-[#888]">Opcional</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                    Precio Mayorista por Unidad ($)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="Ej: 6500 (dejar vacío si no aplica)"
+                    value={formData.priceWholesale}
+                    onChange={(e) => setFormData({ ...formData, priceWholesale: e.target.value })}
+                    className="w-full bg-[#121212] border border-[#333] focus:border-[#D4AF37] rounded-[2px] px-3 py-2 text-sm font-mono text-[#F8F7F4] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#BBB] mb-1">
+                    Mínimo de unidades para aplicar mayorista
+                  </label>
+                  <input
+                    type="number"
+                    min={2}
+                    placeholder="Ej: 10"
+                    value={formData.wholesaleMinUnits}
+                    onChange={(e) => setFormData({ ...formData, wholesaleMinUnits: Number(e.target.value) })}
+                    className="w-full bg-[#121212] border border-[#333] focus:border-[#D4AF37] rounded-[2px] px-3 py-2 text-sm font-mono text-[#F8F7F4] focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
 

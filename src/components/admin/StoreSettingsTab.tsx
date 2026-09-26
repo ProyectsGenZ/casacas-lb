@@ -917,18 +917,6 @@ export const StoreSettingsTab: React.FC = () => {
                 </div>
               </div>
             )}
-
-            <div>
-              <label className="block text-xs font-semibold text-[#BBB] mb-1">
-                Cantidad de Cuotas sin Interés
-              </label>
-              <input
-                type="number"
-                value={formData.shipping.installmentsCount}
-                onChange={(e) => handleNestedChange('shipping', 'installmentsCount', Number(e.target.value))}
-                className="w-full max-w-xs bg-[#181818] border border-[#333] rounded-[2px] px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C8102E]"
-              />
-            </div>
           </div>
         </div>
       )}

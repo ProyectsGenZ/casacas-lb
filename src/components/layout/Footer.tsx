@@ -179,7 +179,7 @@ export const Footer: React.FC = () => {
               Efectivo en local
             </span>
             <span className="px-2 py-1 bg-[#161616] border border-[#2B2B2B] rounded-[2px] text-[10px] text-[#D0CDC5]">
-              Tarjetas de crédito (3 cuotas)
+              Tarjetas de débito y crédito
             </span>
             <span className="px-2 py-1 bg-[#161616] border border-[#2B2B2B] rounded-[2px] text-[10px] text-[#D0CDC5]">
               Mercado Pago

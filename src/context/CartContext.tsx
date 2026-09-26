@@ -24,6 +24,7 @@ interface CartContextType {
   remainingForFreeShipping: number;
   deliveryEnabled: boolean;
   pickupOnlyMessage?: string;
+  getItemEffectivePrice: (item: CartItem) => { price: number; isWholesale: boolean };
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -153,7 +154,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const freeThreshold = settings.shipping?.freeShippingThreshold || brandConfig.freeShippingThreshold;
   const standardCost = settings.shipping?.standardShippingCost || brandConfig.standardShippingCost;
 
-  const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+  const getProductTotalUnits = (productId: string) => {
+    return cart.filter((i) => i.product.id === productId).reduce((sum, i) => sum + i.quantity, 0);
+  };
+
+  const getItemEffectivePrice = (item: CartItem): { price: number; isWholesale: boolean } => {
+    const totalUnits = getProductTotalUnits(item.product.id);
+    const minUnits = item.product.wholesaleMinUnits || 10;
+    if (item.product.priceWholesale && totalUnits >= minUnits) {
+      return { price: item.product.priceWholesale, isWholesale: true };
+    }
+    return { price: item.product.price, isWholesale: false };
+  };
+
+  const subtotal = cart.reduce((acc, item) => {
+    const { price } = getItemEffectivePrice(item);
+    return acc + price * item.quantity;
+  }, 0);
   const discountAmount = Math.round(subtotal * (discountPercentage / 100));
 
   // If delivery is disabled, shipping is always 0 (pickup only). Otherwise standard logic applies.
@@ -187,7 +204,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         freeShippingProgress,
         remainingForFreeShipping,
         deliveryEnabled,
-        pickupOnlyMessage: settings.shipping?.pickupOnlyMessage
+        pickupOnlyMessage: settings.shipping?.pickupOnlyMessage,
+        getItemEffectivePrice
       }}
     >
       {children}

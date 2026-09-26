@@ -32,11 +32,6 @@ export const AdminLoginView: React.FC = () => {
     }, 350);
   };
 
-  const handleFillDemo = () => {
-    setUsername('AdminsCasacaslb');
-    setPassword('GenZPass.123@@');
-    setError(null);
-  };
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
@@ -142,19 +137,7 @@ export const AdminLoginView: React.FC = () => {
           </button>
         </form>
 
-        {/* Demo Credentials Helper */}
-        <div className="mt-6 pt-5 border-t border-[#1E1E1E] text-center">
-          <p className="text-[11px] text-[#7E7B74] mb-2 font-mono">
-            Acceso Rápido de Prueba (Demo)
-          </p>
-          <button
-            type="button"
-            onClick={handleFillDemo}
-            className="text-xs text-[#C8102E] hover:text-[#E01837] font-semibold underline underline-offset-4 cursor-pointer transition-colors"
-          >
-            Rellenar con: AdminsCasacaslb / GenZPass.123@@
-          </button>
-        </div>
+
 
       </div>
     </div>

@@ -21,7 +21,8 @@ export const CartDrawer: React.FC = () => {
     applyCoupon,
     removeCoupon,
     deliveryEnabled,
-    pickupOnlyMessage
+    pickupOnlyMessage,
+    getItemEffectivePrice
   } = useCart();
 
   const { navigateToCatalog, showToast } = useUI();
@@ -62,7 +63,11 @@ export const CartDrawer: React.FC = () => {
   const handleCheckout = () => {
     // Generate WhatsApp checkout message or simulated checkout
     const itemsSummary = cart
-      .map((item) => `- ${item.quantity}x ${item.product.name} (Talle: ${item.selectedSize}, Color: ${item.selectedColor.name}) = ${formatPrice(item.product.price * item.quantity)}`)
+      .map((item) => {
+        const { price, isWholesale } = getItemEffectivePrice(item);
+        const wholesaleTag = isWholesale ? ' [TARIFA MAYORISTA]' : '';
+        return `- ${item.quantity}x ${item.product.name} (Talle: ${item.selectedSize}, Color: ${item.selectedColor.name}) = ${formatPrice(price * item.quantity)}${wholesaleTag}`;
+      })
       .join('\n');
     
     const shippingText = !deliveryEnabled
@@ -214,9 +219,21 @@ export const CartDrawer: React.FC = () => {
                     </div>
 
                     <div className="text-right">
-                      <span className="font-bold text-sm text-[#F8F7F4]">
-                        {formatPrice(item.product.price * item.quantity)}
-                      </span>
+                      {(() => {
+                        const { price: itemUnitPrice, isWholesale } = getItemEffectivePrice(item);
+                        return (
+                          <>
+                            {isWholesale && (
+                              <span className="text-[10px] text-[#D4AF37] font-semibold block leading-tight">
+                                Mayorista ({formatPrice(itemUnitPrice)} c/u)
+                              </span>
+                            )}
+                            <span className="font-bold text-sm text-[#F8F7F4]">
+                              {formatPrice(itemUnitPrice * item.quantity)}
+                            </span>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

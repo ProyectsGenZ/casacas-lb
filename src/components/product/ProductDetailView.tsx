@@ -14,7 +14,6 @@ import {
   Truck,
   RotateCcw,
   ShieldCheck,
-  CreditCard,
   Plus,
   Minus,
   ArrowLeft,
@@ -51,8 +50,17 @@ export const ProductDetailView: React.FC = () => {
   const [isCustomVersion, setIsCustomVersion] = useState(false);
 
   const isFavorite = isInWishlist(selectedProduct.id);
-  const currentPrice = isCustomVersion && selectedProduct.priceCustom ? selectedProduct.priceCustom : selectedProduct.priceBase;
-  const installmentAmount = Math.round(currentPrice / brandConfig.installmentsCount);
+  const isWholesaleApplicable = Boolean(
+    selectedProduct.priceWholesale &&
+    !isCustomVersion &&
+    quantity >= (selectedProduct.wholesaleMinUnits || 10)
+  );
+
+  const currentPrice = isCustomVersion && selectedProduct.priceCustom
+    ? selectedProduct.priceCustom
+    : isWholesaleApplicable && selectedProduct.priceWholesale
+    ? selectedProduct.priceWholesale
+    : selectedProduct.price;
 
   const formatMoney = (val: number | null) =>
     val == null ? '—' : `$ ${new Intl.NumberFormat('es-AR').format(val)}`;
@@ -297,12 +305,31 @@ export const ProductDetailView: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 mt-1.5 text-xs text-[#D8D4CA]">
-                  <CreditCard className="w-4 h-4 text-[#C8102E]" />
-                  <span>
-                    <strong className="text-white">{brandConfig.installmentsCount} cuotas</strong> de {formatMoney(installmentAmount)} sin interés
-                  </span>
-                </div>
+                {selectedProduct.priceWholesale && (
+                  <div
+                    className={`mt-2.5 p-2.5 rounded-[2px] border flex items-center justify-between text-xs transition-all ${
+                      isWholesaleApplicable
+                        ? 'bg-[#1D1707] border-[#D4AF37] text-[#F5E6B3]'
+                        : 'bg-[#151515] border-[#2C2C2C] text-[#BBB]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        isWholesaleApplicable
+                          ? 'bg-[#D4AF37] text-black'
+                          : 'bg-[#2A2A2A] text-[#D4AF37]'
+                      }`}>
+                        {isWholesaleApplicable ? 'Mayorista Aplicado' : 'Tarifa Mayorista'}
+                      </span>
+                      <span>
+                        Desde <strong>{selectedProduct.wholesaleMinUnits || 10} unidades</strong>
+                      </span>
+                    </div>
+                    <span className="font-mono font-bold text-sm text-[#F8F7F4]">
+                      {formatMoney(selectedProduct.priceWholesale)} <span className="text-[10px] font-normal text-[#888]">c/u</span>
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

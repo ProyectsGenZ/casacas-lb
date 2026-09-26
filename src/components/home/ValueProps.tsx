@@ -16,8 +16,8 @@ export const ValueProps: React.FC = () => {
     },
     {
       icon: ShieldCheck,
-      title: 'Pagos protegidos y cuotas',
-      description: `${brandConfig.installmentsCount} cuotas sin interés con todas las tarjetas de crédito bancarias y 10% de descuento abonando por transferencia.`
+      title: 'Precios directos de fábrica',
+      description: 'Precios oficiales y transparentes, descuentos por cantidad mayorista y 10% OFF abonando por transferencia bancaria.'
     },
     {
       icon: MessageSquare,
