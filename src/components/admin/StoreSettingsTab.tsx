@@ -22,7 +22,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 
-const compressAndReadFile = (file: File, maxWidth = 1200, maxHeight = 1200): Promise<string> => {
+const compressAndReadFile = (file: File, maxWidth = 1280, maxHeight = 720): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -48,7 +48,7 @@ const compressAndReadFile = (file: File, maxWidth = 1200, maxHeight = 1200): Pro
         elem.height = height;
         const ctx = elem.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        const dataUrl = elem.toDataURL('image/jpeg', 0.85);
+        const dataUrl = elem.toDataURL('image/jpeg', 0.75);
         resolve(dataUrl);
       };
       img.onerror = (err) => reject(err);

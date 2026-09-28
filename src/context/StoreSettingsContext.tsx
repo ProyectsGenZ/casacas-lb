@@ -215,13 +215,26 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => unsubscribe();
   }, []);
 
+const cleanForFirestore = <T,>(data: T): T => {
+  return JSON.parse(
+    JSON.stringify(data, (_, value) => (value === undefined ? null : value))
+  );
+};
+
   const updateSettings = async (newSettings: Partial<SiteSettings>) => {
     const updated = { ...settings, ...newSettings };
-    setSettings(updated);
+    const sanitized = cleanForFirestore(updated);
+    setSettings(sanitized);
+
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sanitized));
+    } catch (storageErr) {
+      console.warn('localStorage quota warning:', storageErr);
+    }
+
+    try {
       const docRef = doc(db, 'site_settings', 'content');
-      await setDoc(docRef, updated, { merge: true });
+      await setDoc(docRef, sanitized, { merge: true });
     } catch (e) {
       console.error('Error saving settings to Firestore:', e);
       throw e;

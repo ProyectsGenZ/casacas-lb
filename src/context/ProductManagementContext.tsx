@@ -19,6 +19,12 @@ const STORAGE_KEY = 'casacas_lb_managed_products';
 
 const ProductManagementContext = createContext<ProductManagementContextType | undefined>(undefined);
 
+const cleanForFirestore = <T,>(data: T): T => {
+  return JSON.parse(
+    JSON.stringify(data, (_, value) => (value === undefined ? null : value))
+  );
+};
+
 export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { showToast } = useUI();
   
@@ -56,7 +62,8 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
           }
         } else {
           // Initialize in Firestore with seed data
-          setDoc(docRef, { items: productsData }).catch((err) => {
+          const sanitizedSeed = cleanForFirestore(productsData);
+          setDoc(docRef, { items: sanitizedSeed }).catch((err) => {
             console.error('Error seeding products in Firestore:', err);
           });
         }
@@ -70,12 +77,19 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
   }, []);
 
   const saveProductsToCloud = async (newProducts: Product[]) => {
+    const sanitized = cleanForFirestore(newProducts);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newProducts));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+    } catch (storageErr) {
+      console.warn('localStorage warning / quota:', storageErr);
+    }
+
+    try {
       const docRef = doc(db, 'catalog', 'products');
-      await setDoc(docRef, { items: newProducts });
-    } catch (err) {
+      await setDoc(docRef, { items: sanitized });
+    } catch (err: any) {
       console.error('Error updating products in Firestore:', err);
+      showToast('Atención: no se pudo guardar en la nube de Firebase. Revisa tu conexión.', 'error');
     }
   };
 
