@@ -58,7 +58,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       style={{ borderRadius: 'var(--radius-xs)' }}
     >
       {/* Product Image Container */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#181818]">
+      <div className="relative aspect-square w-full overflow-hidden bg-[#181818]">
         <img
           src={currentImage}
           alt={`Fotografía de ${product.name}`}

@@ -168,7 +168,7 @@ export const ProductDetailView: React.FC = () => {
           
           {/* Gallery Column (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#141414] border border-[#222] rounded-[2px]">
+            <div className="relative aspect-square w-full overflow-hidden bg-[#141414] border border-[#222] rounded-[2px]">
               <img
                 src={selectedProduct.images[activeImageIndex] || selectedProduct.images[0]}
                 alt={`${selectedProduct.name} - Vista ${activeImageIndex + 1}`}
@@ -221,7 +221,7 @@ export const ProductDetailView: React.FC = () => {
                     key={idx}
                     type="button"
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`relative w-20 h-24 shrink-0 rounded-[2px] overflow-hidden border transition-all ${
+                    className={`relative w-20 h-20 aspect-square shrink-0 rounded-[2px] overflow-hidden border transition-all ${
                       activeImageIndex === idx
                         ? 'border-[#C8102E] ring-1 ring-[#C8102E] opacity-100'
                         : 'border-[#262626] opacity-60 hover:opacity-100'

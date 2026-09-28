@@ -116,7 +116,7 @@ export const SearchModal: React.FC = () => {
                   <img
                     src={product.images[0]}
                     alt={product.name}
-                    className="w-12 h-14 object-cover rounded-[2px] bg-[#222]"
+                    className="w-12 h-12 aspect-square object-cover rounded-[2px] bg-[#222]"
                   />
                   <div className="flex-1">
                     <span className="text-[10px] uppercase font-bold text-[#C85A32]">{product.category}</span>

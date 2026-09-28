@@ -166,7 +166,7 @@ export const CartDrawer: React.FC = () => {
                 className="flex gap-3.5 p-3 bg-[#161616] border border-[#222] rounded-[2px] relative"
               >
                 {/* Thumb */}
-                <div className="w-20 h-24 bg-[#1F1F1F] rounded-[2px] overflow-hidden shrink-0">
+                <div className="w-20 h-20 aspect-square bg-[#1F1F1F] rounded-[2px] overflow-hidden shrink-0">
                   <img
                     src={item.product.images[0]}
                     alt={item.product.name}
