@@ -5,7 +5,7 @@ import { Product } from '../../types';
 import { Search, X, ArrowRight } from 'lucide-react';
 
 export const SearchModal: React.FC = () => {
-  const { isSearchOpen, setIsSearchOpen, openProductDetail } = useUI();
+  const { isSearchOpen, setIsSearchOpen, openProductDetail, navigateToCatalog } = useUI();
   const { products } = useProductManagement();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,7 +37,8 @@ export const SearchModal: React.FC = () => {
           p.name.toLowerCase().includes(query.toLowerCase()) ||
           p.category.toLowerCase().includes(query.toLowerCase()) ||
           p.description.toLowerCase().includes(query.toLowerCase()) ||
-          p.colors.some((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+          p.colors.some((c) => c.name.toLowerCase().includes(query.toLowerCase())) ||
+          (p.sku && p.sku.toLowerCase().includes(query.toLowerCase()))
       )
     : [];
 
@@ -54,6 +55,15 @@ export const SearchModal: React.FC = () => {
     openProductDetail(product);
   };
 
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = query.trim();
+    if (trimmed) {
+      setIsSearchOpen(false);
+      navigateToCatalog('Todos', trimmed);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 lg:p-20"
@@ -66,24 +76,32 @@ export const SearchModal: React.FC = () => {
       <div className="relative max-w-2xl mx-auto bg-[#141414] border border-[#2A2A2A] rounded-[2px] shadow-2xl overflow-hidden z-10">
         
         {/* Search Bar */}
-        <div className="flex items-center gap-3 p-4 border-b border-[#242424] bg-[#181818]">
-          <Search className="w-5 h-5 text-[#C85A32] shrink-0" />
+        <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 p-4 border-b border-[#242424] bg-[#181818]">
+          <button type="submit" className="p-0 border-0 bg-transparent cursor-pointer" aria-label="Buscar">
+            <Search className="w-5 h-5 text-[#C8102E] shrink-0" />
+          </button>
           <input
             ref={inputRef}
             type="text"
             placeholder="Buscá por casacas, camperas, buzos, talle o color..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearchSubmit(e);
+              }
+            }}
             className="w-full bg-transparent text-sm text-[#F8F7F4] placeholder:text-[#666] focus:outline-none"
           />
           <button
+            type="button"
             onClick={() => setIsSearchOpen(false)}
-            className="p-1 text-[#888] hover:text-white"
+            className="p-1 text-[#888] hover:text-white cursor-pointer"
             aria-label="Cerrar búsqueda"
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
+        </form>
 
         {/* Results Container */}
         <div className="p-4 max-h-[60vh] overflow-y-auto">
@@ -104,23 +122,33 @@ export const SearchModal: React.FC = () => {
             </div>
           ) : results.length > 0 ? (
             <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#777] px-2">
-                {results.length} resultados encontrados
-              </span>
+              <div className="flex items-center justify-between px-2 pb-1 border-b border-[#222]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#777]">
+                  {results.length} {results.length === 1 ? 'prenda encontrada' : 'prendas encontradas'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleSearchSubmit()}
+                  className="text-[11px] font-bold uppercase tracking-wider text-[#C8102E] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Ver todas en catálogo</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
               {results.map((product) => (
                 <button
                   key={product.id}
                   onClick={() => handleSelectProduct(product)}
-                  className="w-full flex items-center gap-3.5 p-2.5 hover:bg-[#1C1C1C] rounded-[2px] text-left transition-colors group"
+                  className="w-full flex items-center gap-3.5 p-2.5 hover:bg-[#1C1C1C] rounded-[2px] text-left transition-colors group cursor-pointer"
                 >
                   <img
                     src={product.images[0]}
                     alt={product.name}
-                    className="w-12 h-12 aspect-square object-cover rounded-[2px] bg-[#222]"
+                    className="w-12 h-12 aspect-square object-contain p-0.5 rounded-[2px] bg-[#222]"
                   />
                   <div className="flex-1">
-                    <span className="text-[10px] uppercase font-bold text-[#C85A32]">{product.category}</span>
-                    <h4 className="font-display font-bold text-sm text-white group-hover:text-[#C85A32] transition-colors">
+                    <span className="text-[10px] uppercase font-bold text-[#C8102E]">{product.category}</span>
+                    <h4 className="font-display font-bold text-sm text-white group-hover:text-[#C8102E] transition-colors">
                       {product.name}
                     </h4>
                     <span className="text-xs font-semibold text-[#B5B2AA]">{formatPrice(product.price)}</span>
@@ -135,6 +163,23 @@ export const SearchModal: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Full results footer action */}
+        {query.trim() !== '' && results.length > 0 && (
+          <div className="p-3 bg-[#181818] border-t border-[#242424] flex items-center justify-between gap-3">
+            <span className="text-[11px] text-[#888] hidden sm:inline">
+              Presioná <kbd className="px-1.5 py-0.5 bg-[#252525] border border-[#333] rounded text-[10px] text-white font-mono">Enter</kbd> para explorar en pantalla completa
+            </span>
+            <button
+              type="button"
+              onClick={() => handleSearchSubmit()}
+              className="w-full sm:w-auto px-4 py-2 bg-[#C8102E] hover:bg-[#E01837] text-white font-bold text-xs uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-[#C8102E]/20"
+            >
+              <span>Ver todos los resultados ({results.length})</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
       </div>
     </div>

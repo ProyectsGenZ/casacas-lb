@@ -82,6 +82,16 @@ export const Hero: React.FC = () => {
   const currentDragOffsetRef = useRef(0);
   const wasDraggedRef = useRef(false);
   const isTransitioningRef = useRef(false);
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-unlock transition lock to prevent freezing under rapid clicks
+  const triggerTransitionLock = () => {
+    isTransitioningRef.current = true;
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = setTimeout(() => {
+      isTransitioningRef.current = false;
+    }, 340);
+  };
 
   // Re-arm transitions after silent repositioning
   useEffect(() => {
@@ -93,27 +103,51 @@ export const Hero: React.FC = () => {
     }
   }, [withTransition]);
 
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    };
+  }, []);
+
   // Active logical slide index (0 to count - 1)
   const activeSlideIndex = count > 1 ? (trackIndex - 1 + count) % count : 0;
   const slide = slides[activeSlideIndex] || slides[0];
 
   const nextSlide = () => {
-    if (count <= 1 || isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
+    if (count <= 1) return;
+    if (isTransitioningRef.current) {
+      // If user is clicking rapidly at clone boundary, resolve immediately
+      if (trackIndex >= count + 1) {
+        setWithTransition(false);
+        setTrackIndex(1);
+        isTransitioningRef.current = false;
+        return;
+      }
+    }
+    triggerTransitionLock();
     setWithTransition(true);
     setTrackIndex((prev) => prev + 1);
   };
 
   const prevSlide = () => {
-    if (count <= 1 || isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
+    if (count <= 1) return;
+    if (isTransitioningRef.current) {
+      if (trackIndex <= 0) {
+        setWithTransition(false);
+        setTrackIndex(count);
+        isTransitioningRef.current = false;
+        return;
+      }
+    }
+    triggerTransitionLock();
     setWithTransition(true);
     setTrackIndex((prev) => prev - 1);
   };
 
   const goToSlide = (idx: number) => {
     if (count <= 1 || isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
+    triggerTransitionLock();
     setWithTransition(true);
     setTrackIndex(idx + 1);
   };
@@ -122,11 +156,12 @@ export const Hero: React.FC = () => {
   const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget) return;
     isTransitioningRef.current = false;
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     if (count <= 1) return;
 
     const trackEl = trackRef.current;
 
-    if (trackIndex === count + 1) {
+    if (trackIndex >= count + 1) {
       // Reached the clone of slide 1 at end -> jump silently to real slide 1
       if (trackEl) {
         trackEl.style.transition = 'none';
@@ -135,7 +170,7 @@ export const Hero: React.FC = () => {
       }
       setWithTransition(false);
       setTrackIndex(1);
-    } else if (trackIndex === 0) {
+    } else if (trackIndex <= 0) {
       // Reached the clone of last slide at start -> jump silently to real last slide
       if (trackEl) {
         trackEl.style.transition = 'none';
@@ -212,7 +247,7 @@ export const Hero: React.FC = () => {
           onTransitionEnd={handleTransitionEnd}
           style={{
             transform: `translateX(calc(-${trackIndex * 100}% + ${dragOffset}px))`,
-            transition: isDragging || !withTransition ? 'none' : 'transform 650ms cubic-bezier(0.16, 1, 0.3, 1)',
+            transition: isDragging || !withTransition ? 'none' : 'transform 320ms cubic-bezier(0.2, 0.9, 0.3, 1)',
             willChange: 'transform'
           }}
         >

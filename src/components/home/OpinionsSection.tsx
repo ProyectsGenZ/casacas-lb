@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useReviews } from '../../context/ReviewsContext';
 import { ReviewSubmissionModal } from './ReviewSubmissionModal';
-import { Star, MessageSquareQuote, Plus, Camera, X } from 'lucide-react';
+import { Star, MessageSquareQuote, Plus, Camera, X, MapPin } from 'lucide-react';
 
 export const OpinionsSection: React.FC = () => {
   const { approvedReviews } = useReviews();
@@ -94,23 +94,23 @@ export const OpinionsSection: React.FC = () => {
                 </div>
 
                 {/* Author footer */}
-                <div className="pt-6 mt-6 border-t border-[#222222] flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+                <div className="pt-6 mt-6 border-t border-[#222222] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     {review.userPhoto && !review.isAnonymous ? (
-                      <img src={review.userPhoto} alt={review.author} className="w-7 h-7 rounded-full object-cover" />
-                    ) : null}
-                    <div>
-                      <h3 className="font-display font-bold text-sm text-[#F8F7F4]">
-                        {review.author}
-                      </h3>
-                      <span className="text-xs text-[#7A7873]">
-                        {review.origin || 'Las Breñas, Chaco'}
-                      </span>
-                    </div>
+                      <img src={review.userPhoto} alt={review.author} className="w-8 h-8 rounded-full object-cover shrink-0 border border-[#333]" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[#1F1F1F] border border-[#333] flex items-center justify-center font-display font-bold text-xs text-[#C8102E] shrink-0">
+                        {review.author.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <h3 className="font-display font-bold text-sm text-[#F8F7F4] truncate">
+                      {review.author}
+                    </h3>
                   </div>
 
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[#202020] text-[#999] rounded-[2px]">
-                    {review.userEmail ? 'Google Verificado' : 'Verificado'}
+                  <span className="text-xs text-[#8E8B84] flex items-center gap-1.5 shrink-0 font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-[#C8102E] shrink-0" />
+                    <span>{review.origin || 'Las Breñas, Chaco'}</span>
                   </span>
                 </div>
               </article>

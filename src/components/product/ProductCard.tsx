@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product, ProductColor } from '../../types';
 import { useUI } from '../../context/UIContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { brandConfig } from '../../config/brandConfig';
-import { Heart, Plus, Check, Sparkles, Flame, MessageCircle } from 'lucide-react';
+import { Heart, Plus, Check, Sparkles, Flame } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 interface ProductCardProps {
@@ -18,12 +18,31 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
 
   const [isHovered, setIsHovered] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState<ProductColor>(product.colors[0] || { name: 'Único', hex: '#C8102E' });
   const [isQuickAdding, setIsQuickAdding] = useState(false);
 
   const isFavorite = isInWishlist(product.id);
-  const hasSecondImage = product.images.length > 1;
-  const currentImage = isHovered && hasSecondImage ? product.images[1] : product.images[0];
+
+  // Automatically cycle through ALL assigned images when hovered
+  useEffect(() => {
+    if (!isHovered || product.images.length <= 1) {
+      setActiveImageIndex(0);
+      return;
+    }
+
+    // Switch to next image right away
+    setActiveImageIndex(1 % product.images.length);
+
+    // Continuous cycling through 0, 1, 2, ...
+    const interval = setInterval(() => {
+      setActiveImageIndex((prev) => (prev + 1) % product.images.length);
+    }, 1100);
+
+    return () => clearInterval(interval);
+  }, [isHovered, product.images.length]);
+
+  const currentImage = product.images[activeImageIndex] || product.images[0];
 
   const installmentAmount = Math.round(product.priceBase / brandConfig.installmentsCount);
 
@@ -53,18 +72,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <article
       onClick={() => openProductDetail(product)}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setActiveImageIndex(0);
+      }}
       className="group flex flex-col h-full bg-[#121212] border border-[#202020] hover:border-[#383838] transition-all duration-200 cursor-pointer text-left select-none relative"
       style={{ borderRadius: 'var(--radius-xs)' }}
     >
-      {/* Product Image Container */}
-      <div className="relative aspect-square w-full overflow-hidden bg-[#181818]">
+      {/* Product Image Container (1:1 Ratio, without clipping borders) */}
+      <div className="relative aspect-square w-full overflow-hidden bg-[#161616] flex items-center justify-center">
         <img
           src={currentImage}
           alt={`Fotografía de ${product.name}`}
-          className="w-full h-full object-cover object-center transition-all duration-500 ease-out group-hover:scale-105"
+          className="w-full h-full object-contain p-1 object-center transition-all duration-300 ease-out"
           loading="lazy"
         />
+
+        {/* Multi-image indicators on hover */}
+        {product.images.length > 1 && isHovered && (
+          <div className="absolute bottom-12 inset-x-3 flex items-center justify-center gap-1 z-20 pointer-events-none">
+            {product.images.map((_, idx) => (
+              <span
+                key={idx}
+                className={`h-1 rounded-full transition-all duration-300 shadow-sm ${
+                  activeImageIndex === idx ? 'w-4 bg-[#C8102E]' : 'w-1.5 bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
@@ -187,10 +223,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="mt-2.5 w-full py-2 px-2.5 bg-[#161410] hover:bg-[#221D12] border border-[#3A3018] hover:border-[#D4AF37] text-[#D4AF37] text-[10.5px] font-bold uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+            className="mt-2.5 w-full py-2 px-2.5 bg-[#181818] hover:bg-[#222222] border border-[#333333] hover:border-[#C8102E] text-white hover:text-[#C8102E] text-[10.5px] font-bold uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm group/btn"
             title={`Consultar presupuesto por mayor para ${product.name}`}
           >
-            <MessageCircle className="w-3.5 h-3.5 text-[#25D366] shrink-0" />
+            <img src="/media/whatsapp-logo.png" alt="WhatsApp" className="w-3.5 h-3.5 object-contain shrink-0" />
             <span>Consultar Precio Mayorista</span>
           </a>
         </div>

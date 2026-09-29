@@ -355,6 +355,7 @@ export const CartDrawer: React.FC = () => {
               onClick={handleCheckout}
               className="w-full py-4 bg-[#C8102E] hover:bg-[#E01837] text-white font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#C8102E]/20 active:scale-[0.98] focus-ring cursor-pointer"
             >
+              <img src="/media/whatsapp-logo.png" alt="WhatsApp" className="w-4 h-4 object-contain shrink-0" />
               <span>Continuar compra por WhatsApp</span>
               <ArrowRight className="w-4 h-4" />
             </button>

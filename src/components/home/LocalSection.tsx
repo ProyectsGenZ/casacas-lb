@@ -33,7 +33,7 @@ export const LocalSection: React.FC = () => {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2.5 w-full py-4 bg-[#25D366] hover:bg-[#20BA5A] text-[#121212] font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all shadow-md active:scale-[0.98] focus-ring"
               >
-                <MessageCircle className="w-4 h-4 text-[#121212]" />
+                <img src="/media/whatsapp-logo.png" alt="WhatsApp" className="w-4 h-4 object-contain shrink-0" />
                 <span>Escribir por WhatsApp a Leo</span>
               </a>
 

@@ -168,11 +168,11 @@ export const ProductDetailView: React.FC = () => {
           
           {/* Gallery Column (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="relative aspect-square w-full overflow-hidden bg-[#141414] border border-[#222] rounded-[2px]">
+            <div className="relative aspect-square w-full overflow-hidden bg-[#141414] border border-[#222] rounded-[2px] flex items-center justify-center">
               <img
                 src={selectedProduct.images[activeImageIndex] || selectedProduct.images[0]}
                 alt={`${selectedProduct.name} - Vista ${activeImageIndex + 1}`}
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-contain p-1.5 object-center"
               />
 
               {/* Badges */}
@@ -228,7 +228,7 @@ export const ProductDetailView: React.FC = () => {
                     }`}
                     aria-label={`Ver imagen ${idx + 1}`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="" className="w-full h-full object-contain p-0.5" />
                   </button>
                 ))}
               </div>
@@ -449,7 +449,7 @@ export const ProductDetailView: React.FC = () => {
                   rel="noopener noreferrer"
                   className="w-full h-12 bg-[#1F1F1F] hover:bg-[#282828] border border-[#333] text-[#F8F7F4] font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-2 focus-ring"
                 >
-                  <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                  <img src="/media/whatsapp-logo.png" alt="WhatsApp" className="w-4 h-4 object-contain shrink-0" />
                   <span>Consultar por WhatsApp</span>
                 </a>
 
@@ -460,9 +460,9 @@ export const ProductDetailView: React.FC = () => {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full h-12 bg-[#1A1812] hover:bg-[#252219] border border-[#D4AF37]/60 hover:border-[#D4AF37] text-[#D4AF37] hover:text-[#FFF] font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-2 focus-ring shadow-sm"
+                  className="w-full h-12 bg-[#181818] hover:bg-[#222222] border border-[#383838] hover:border-[#C8102E] text-white hover:text-[#C8102E] font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-2 focus-ring shadow-sm"
                 >
-                  <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                  <img src="/media/whatsapp-logo.png" alt="WhatsApp" className="w-4 h-4 object-contain shrink-0" />
                   <span>Consultar Mayorista</span>
                 </a>
               </div>

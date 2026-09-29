@@ -125,10 +125,10 @@ const AppContent: React.FC = () => {
         )}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 bg-[#25D366] hover:bg-[#20BA5A] text-[#121212] font-bold text-xs uppercase tracking-wider rounded-full shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 focus-ring"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5 px-4 py-3 bg-[#25D366] hover:bg-[#20BA5A] text-[#121212] font-bold text-xs uppercase tracking-wider rounded-full shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 focus-ring"
         aria-label={`Abrir chat de WhatsApp con ${settings.brandName}`}
       >
-        <MessageCircle className="w-5 h-5 text-[#121212] fill-current" />
+        <img src="/media/whatsapp-logo.png" alt="WhatsApp" className="w-5 h-5 object-contain shrink-0" />
         <span className="hidden sm:inline">WhatsApp directo</span>
       </a>
 

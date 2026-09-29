@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  onSnapshot,
+  setDoc,
+  deleteDoc,
+  writeBatch,
+  getDocs,
+  getDoc
+} from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Product } from '../types';
 import { productsData } from '../data/products';
@@ -25,6 +34,23 @@ const cleanForFirestore = <T,>(data: T): T => {
   );
 };
 
+const safeSaveLocal = (items: Product[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanForFirestore(items)));
+  } catch (storageErr) {
+    console.warn('localStorage quota warning, using compact fallback:', storageErr);
+    try {
+      const compact = items.map((p) => ({
+        ...p,
+        images: p.images.map((img) => (img.startsWith('data:image') && img.length > 500 ? '' : img))
+      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(compact));
+    } catch {
+      // Ignore if storage is completely filled
+    }
+  }
+};
+
 export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { showToast } = useUI();
   
@@ -43,55 +69,60 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     return productsData;
   });
 
-  // Sync with Firestore in real-time
+  // Sync with Firestore in real-time using the 'products' collection
   useEffect(() => {
-    const docRef = doc(db, 'catalog', 'products');
+    let unsubscribe: () => void = () => {};
+    const prodsCol = collection(db, 'products');
 
-    const unsubscribe = onSnapshot(
-      docRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          if (Array.isArray(data.items) && data.items.length > 0) {
-            setProducts(data.items);
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(data.items));
-            } catch {
-              // ignore
+    const initCatalog = async () => {
+      try {
+        const prodsSnap = await getDocs(prodsCol);
+        if (prodsSnap.empty) {
+          // If collection 'products' is empty, check legacy 'catalog/products' or use seed data
+          let initialItems: Product[] = productsData;
+          try {
+            const legacyDoc = await getDoc(doc(db, 'catalog', 'products'));
+            if (legacyDoc.exists() && Array.isArray(legacyDoc.data()?.items) && legacyDoc.data()?.items.length > 0) {
+              initialItems = legacyDoc.data()?.items;
             }
+          } catch (e) {
+            console.warn('Legacy catalog doc check:', e);
           }
-        } else {
-          // Initialize in Firestore with seed data
-          const sanitizedSeed = cleanForFirestore(productsData);
-          setDoc(docRef, { items: sanitizedSeed }).catch((err) => {
-            console.error('Error seeding products in Firestore:', err);
-          });
+
+          // Populate 'products' collection with initial items
+          const batch = writeBatch(db);
+          for (const item of initialItems) {
+            const itemRef = doc(db, 'products', item.id);
+            batch.set(itemRef, cleanForFirestore(item));
+          }
+          await batch.commit();
         }
-      },
-      (error) => {
-        console.warn('Firestore catalog sync notice:', error);
+      } catch (err) {
+        console.warn('Products collection initialization notice:', err);
       }
-    );
+
+      // Real-time listener on products collection
+      unsubscribe = onSnapshot(
+        prodsCol,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const loaded = snapshot.docs.map((d) => d.data() as Product);
+            // Sort by numericId descending (newer products first)
+            loaded.sort((a, b) => (b.numericId || 0) - (a.numericId || 0));
+            setProducts(loaded);
+            safeSaveLocal(loaded);
+          }
+        },
+        (error) => {
+          console.warn('Firestore products collection listener error:', error);
+        }
+      );
+    };
+
+    initCatalog();
 
     return () => unsubscribe();
   }, []);
-
-  const saveProductsToCloud = async (newProducts: Product[]) => {
-    const sanitized = cleanForFirestore(newProducts);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-    } catch (storageErr) {
-      console.warn('localStorage warning / quota:', storageErr);
-    }
-
-    try {
-      const docRef = doc(db, 'catalog', 'products');
-      await setDoc(docRef, { items: sanitized });
-    } catch (err: any) {
-      console.error('Error updating products in Firestore:', err);
-      showToast('Atención: no se pudo guardar en la nube de Firebase. Revisa tu conexión.', 'error');
-    }
-  };
 
   const addProduct = (productData: Omit<Product, 'id' | 'numericId'>): Product => {
     const nextNumericId = products.length > 0
@@ -107,34 +138,64 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
 
     const updated = [newProduct, ...products];
     setProducts(updated);
-    saveProductsToCloud(updated);
-    showToast(`Producto "${newProduct.name}" creado con éxito.`, 'success');
+    safeSaveLocal(updated);
+
+    // Save to Firestore collection as its own document (no 1MB single-document limit)
+    setDoc(doc(db, 'products', newProduct.id), cleanForFirestore(newProduct))
+      .then(() => {
+        showToast(`Producto "${newProduct.name}" guardado en la nube con éxito.`, 'success');
+      })
+      .catch((err: any) => {
+        console.error('Error guardando en Firestore:', err);
+        showToast(`Error al sincronizar con la nube: ${err.message || 'Verifique su conexión'}`, 'error');
+      });
+
     return newProduct;
   };
 
   const updateProduct = (id: string, updatedFields: Partial<Product>) => {
+    let updatedItem: Product | undefined;
     const updated = products.map((item) => {
       if (item.id === id) {
-        return {
+        updatedItem = {
           ...item,
           ...updatedFields,
           stock: updatedFields.stock !== undefined ? Math.max(0, updatedFields.stock) : item.stock
         };
+        return updatedItem;
       }
       return item;
     });
 
     setProducts(updated);
-    saveProductsToCloud(updated);
-    showToast('Producto actualizado correctamente.', 'success');
+    safeSaveLocal(updated);
+
+    if (updatedItem) {
+      setDoc(doc(db, 'products', id), cleanForFirestore(updatedItem), { merge: true })
+        .then(() => {
+          showToast('Producto actualizado en la nube correctamente.', 'success');
+        })
+        .catch((err: any) => {
+          console.error('Error actualizando en Firestore:', err);
+          showToast(`Error al actualizar en la nube: ${err.message || 'Verifique su conexión'}`, 'error');
+        });
+    }
   };
 
   const deleteProduct = (id: string) => {
     const target = products.find((p) => p.id === id);
     const updated = products.filter((item) => item.id !== id);
     setProducts(updated);
-    saveProductsToCloud(updated);
-    showToast(`Producto "${target?.name || id}" eliminado del catálogo.`, 'info');
+    safeSaveLocal(updated);
+
+    deleteDoc(doc(db, 'products', id))
+      .then(() => {
+        showToast(`Producto "${target?.name || id}" eliminado del catálogo.`, 'info');
+      })
+      .catch((err: any) => {
+        console.error('Error eliminando en Firestore:', err);
+        showToast(`Error al eliminar de la nube: ${err.message || 'Verifique su conexión'}`, 'error');
+      });
   };
 
   const updateStock = (id: string, newStock: number) => {
@@ -146,13 +207,29 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
       return item;
     });
     setProducts(updated);
-    saveProductsToCloud(updated);
+    safeSaveLocal(updated);
+
+    setDoc(doc(db, 'products', id), { stock: normalizedStock }, { merge: true }).catch((err) => {
+      console.error('Error actualizando stock en Firestore:', err);
+    });
   };
 
   const resetToDefault = () => {
     setProducts(productsData);
-    saveProductsToCloud(productsData);
-    showToast('Catálogo restablecido a los valores originales oficiales.', 'info');
+    safeSaveLocal(productsData);
+
+    const batch = writeBatch(db);
+    for (const item of productsData) {
+      batch.set(doc(db, 'products', item.id), cleanForFirestore(item));
+    }
+    batch.commit()
+      .then(() => {
+        showToast('Catálogo restablecido a los valores oficiales en la nube.', 'info');
+      })
+      .catch((err: any) => {
+        console.error('Error restableciendo catálogo en Firestore:', err);
+        showToast(`Error al restablecer catálogo: ${err.message || 'Error de conexión'}`, 'error');
+      });
   };
 
   const getProductById = (id: string) => {
@@ -183,3 +260,4 @@ export const useProductManagement = () => {
   }
   return context;
 };
+

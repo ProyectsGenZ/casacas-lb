@@ -16,6 +16,8 @@ interface UIContextType {
   openProductDetail: (product: Product) => void;
   catalogCategoryFilter: ProductCategory | 'Todos';
   setCatalogCategoryFilter: (category: ProductCategory | 'Todos') => void;
+  catalogSearchQuery: string;
+  setCatalogSearchQuery: (query: string) => void;
   
   // Modals
   isSearchOpen: boolean;
@@ -36,7 +38,7 @@ interface UIContextType {
 
   // Navigation helpers
   navigateToHome: () => void;
-  navigateToCatalog: (category?: ProductCategory | 'Todos') => void;
+  navigateToCatalog: (category?: ProductCategory | 'Todos', searchQuery?: string) => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -95,6 +97,7 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     return getStoredProducts()[0] || null;
   });
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<ProductCategory | 'Todos'>('Todos');
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState<string>('');
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
@@ -140,6 +143,8 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       const catSlug = parts[1];
       const cat = slugToCategory(catSlug);
       setCatalogCategoryFilter(cat);
+      const urlQuery = new URLSearchParams(window.location.search).get('q') || '';
+      setCatalogSearchQuery(urlQuery);
       setActiveViewRaw('catalog');
       return;
     }
@@ -178,6 +183,7 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           setActiveViewRaw('home');
         } else if (state.view === 'catalog') {
           setCatalogCategoryFilter(state.category || 'Todos');
+          setCatalogSearchQuery(state.searchQuery || '');
           setActiveViewRaw('catalog');
         } else if (state.view === 'product-detail') {
           if (state.sku || state.productId) {
@@ -208,13 +214,15 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navigateToCatalog = (category: ProductCategory | 'Todos' = 'Todos') => {
+  const navigateToCatalog = (category: ProductCategory | 'Todos' = 'Todos', searchQuery: string = '') => {
     setCatalogCategoryFilter(category);
+    setCatalogSearchQuery(searchQuery);
     setActiveViewRaw('catalog');
     const slug = categoryToSlug(category);
-    const targetPath = slug ? `/catalogo/${slug}` : '/catalogo';
-    if (window.location.pathname !== targetPath) {
-      window.history.pushState({ view: 'catalog', category }, '', targetPath);
+    const searchParam = searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : '';
+    const targetPath = (slug ? `/catalogo/${slug}` : '/catalogo') + searchParam;
+    if (window.location.pathname + window.location.search !== targetPath) {
+      window.history.pushState({ view: 'catalog', category, searchQuery }, '', targetPath);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -266,6 +274,8 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         openProductDetail,
         catalogCategoryFilter,
         setCatalogCategoryFilter,
+        catalogSearchQuery,
+        setCatalogSearchQuery,
         isSearchOpen,
         setIsSearchOpen,
         isSizeGuideOpen,

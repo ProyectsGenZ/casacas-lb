@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Product, ProductCategory, OfferType, ProductOffer, ProductColor } from '../../types';
 import { X, Image as ImageIcon, Save, Plus, Trash2, Upload, Flame, Sparkles } from 'lucide-react';
 
-const compressAndReadFile = (file: File, maxWidth = 800, maxHeight = 800): Promise<string> => {
+const compressAndReadFile = (file: File, maxWidth = 640, maxHeight = 640): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -27,8 +27,16 @@ const compressAndReadFile = (file: File, maxWidth = 800, maxHeight = 800): Promi
         elem.width = width;
         elem.height = height;
         const ctx = elem.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        const dataUrl = elem.toDataURL('image/jpeg', 0.74);
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+        }
+        let dataUrl = elem.toDataURL('image/jpeg', 0.72);
+        // If image exceeds ~90KB base64, apply efficient compression
+        if (dataUrl.length > 120000) {
+          dataUrl = elem.toDataURL('image/jpeg', 0.58);
+        }
         resolve(dataUrl);
       };
       img.onerror = (err) => reject(err);

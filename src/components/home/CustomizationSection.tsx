@@ -68,7 +68,7 @@ export const CustomizationSection: React.FC = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#C8102E] hover:bg-[#E01E37] text-white text-xs font-semibold uppercase tracking-wider rounded-[2px] transition-all focus-ring active:scale-[0.98]"
               >
-                <MessageCircle className="w-4 h-4 text-white" />
+                <img src="/media/whatsapp-logo.png" alt="WhatsApp" className="w-4 h-4 object-contain shrink-0" />
                 <span>Pedir presupuesto con Leo</span>
               </a>
 

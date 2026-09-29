@@ -4,10 +4,15 @@ import { useStoreSettings } from '../../context/StoreSettingsContext';
 import { ProductCard } from '../product/ProductCard';
 import { useUI } from '../../context/UIContext';
 import { ProductCategory, SortOption } from '../../types';
-import { Filter, RotateCcw, SlidersHorizontal, ArrowUpDown, X, Sparkles } from 'lucide-react';
+import { Filter, RotateCcw, SlidersHorizontal, ArrowUpDown, X, Sparkles, Search } from 'lucide-react';
 
 export const CatalogView: React.FC = () => {
-  const { catalogCategoryFilter, setCatalogCategoryFilter } = useUI();
+  const {
+    catalogCategoryFilter,
+    setCatalogCategoryFilter,
+    catalogSearchQuery,
+    setCatalogSearchQuery
+  } = useUI();
   const { products } = useProductManagement();
   const { enabledCategories, isCategoryEnabled } = useStoreSettings();
 
@@ -29,6 +34,17 @@ export const CatalogView: React.FC = () => {
     return products
       .filter((p) => isCategoryEnabled(p.category))
       .filter((p) => {
+        // Search query
+        if (catalogSearchQuery.trim()) {
+          const q = catalogSearchQuery.toLowerCase().trim();
+          const matches =
+            p.name.toLowerCase().includes(q) ||
+            p.category.toLowerCase().includes(q) ||
+            p.description.toLowerCase().includes(q) ||
+            p.colors.some((c) => c.name.toLowerCase().includes(q)) ||
+            (p.sku && p.sku.toLowerCase().includes(q));
+          if (!matches) return false;
+        }
         // Category
         if (selectedCategory !== 'Todos' && p.category.toLowerCase() !== selectedCategory.toLowerCase()) {
           return false;
@@ -53,7 +69,7 @@ export const CatalogView: React.FC = () => {
         if (sortOption === 'recientes') return (b.tag === 'Nuevo' ? 1 : 0) - (a.tag === 'Nuevo' ? 1 : 0);
         return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
       });
-  }, [selectedCategory, selectedSizes, onlyCustomizable, maxPrice, sortOption]);
+  }, [catalogSearchQuery, selectedCategory, selectedSizes, onlyCustomizable, maxPrice, sortOption]);
 
   const toggleSize = (size: string) => {
     setSelectedSizes((prev) =>
@@ -64,6 +80,7 @@ export const CatalogView: React.FC = () => {
   const resetFilters = () => {
     setSelectedCategory('Todos');
     setCatalogCategoryFilter('Todos');
+    setCatalogSearchQuery('');
     setSelectedSizes([]);
     setOnlyCustomizable(false);
     setMaxPrice(55000);
@@ -71,6 +88,7 @@ export const CatalogView: React.FC = () => {
   };
 
   const activeFiltersCount =
+    (catalogSearchQuery.trim() ? 1 : 0) +
     (selectedCategory !== 'Todos' ? 1 : 0) +
     selectedSizes.length +
     (onlyCustomizable ? 1 : 0) +
@@ -100,6 +118,34 @@ export const CatalogView: React.FC = () => {
             Elegí la prenda o pieza base para tu equipo, marca o uso personal. Nosotros nos encargamos de que represente tu identidad.
           </p>
         </div>
+
+        {/* Active Search Filter Banner */}
+        {catalogSearchQuery.trim() && (
+          <div className="mb-8 p-4 bg-[#181818] border border-[#C8102E]/60 rounded-[2px] flex items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-[2px] bg-[#C8102E]/20 border border-[#C8102E]/40 flex items-center justify-center shrink-0">
+                <Search className="w-4 h-4 text-[#C8102E]" />
+              </div>
+              <div>
+                <div className="text-[10px] text-[#8E8B84] uppercase font-bold tracking-wider">
+                  Resultados para la búsqueda
+                </div>
+                <div className="text-sm font-display font-bold text-white">
+                  "{catalogSearchQuery}" — <span className="text-[#C8102E] font-mono">{filteredProducts.length}</span> {filteredProducts.length === 1 ? 'prenda encontrada' : 'prendas encontradas'}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCatalogSearchQuery('')}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#252525] hover:bg-[#333] border border-[#444] text-xs font-semibold text-white rounded-[2px] transition-colors cursor-pointer shrink-0"
+              title="Borrar filtro de búsqueda"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Quitar búsqueda</span>
+            </button>
+          </div>
+        )}
 
         {/* Controls Bar */}
         <div className="flex items-center justify-between gap-4 pb-6 border-b border-[#1C1C1C] mb-8">

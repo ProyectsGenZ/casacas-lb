@@ -71,7 +71,7 @@ export const Footer: React.FC = () => {
                 <span>{settings.contact.hours}</span>
               </div>
               <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-[#25D366] shrink-0" />
+                <img src="/media/whatsapp-logo.png" alt="WhatsApp" className="w-4 h-4 object-contain shrink-0" />
                 <span>{settings.contact.whatsappFormatted}</span>
               </div>
             </div>

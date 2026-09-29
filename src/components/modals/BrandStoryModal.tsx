@@ -90,7 +90,7 @@ export const BrandStoryModal: React.FC = () => {
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 py-3 bg-[#1F1F1F] hover:bg-[#282828] border border-[#333] text-xs font-semibold uppercase text-white rounded-[2px] transition-colors"
           >
-            <MessageCircle className="w-4 h-4 text-[#25D366]" />
+            <img src="/media/whatsapp-logo.png" alt="WhatsApp" className="w-4 h-4 object-contain shrink-0" />
             <span>Hablar por WhatsApp</span>
           </a>
           <a
