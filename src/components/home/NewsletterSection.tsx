@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { brandConfig } from '../../config/brandConfig';
 import { Mail, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { EditableText } from '../admin/EditableText';
 
 export const NewsletterSection: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -43,19 +44,37 @@ export const NewsletterSection: React.FC = () => {
         
         {/* Badge */}
         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#1F1F1F] border border-[#333] text-[#F8F7F4] text-xs font-semibold uppercase tracking-wider rounded-[2px] mb-4">
-          <Mail className="w-3.5 h-3.5 text-[#C85A32]" />
-          Comunidad {brandConfig.name}
+          <Mail className="w-3.5 h-3.5 text-[#C85A32] shrink-0" />
+          <EditableText
+            contentKey="home.news.badge"
+            defaultValue={`Comunidad ${brandConfig.name}`}
+            label="Insignia newsletter"
+            as="span"
+          />
         </span>
 
         {/* Title */}
-        <h2 id="newsletter-heading" className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-[#F8F7F4] tracking-tight">
-          Enterate antes que nadie.
-        </h2>
+        <div className="mt-1">
+          <EditableText
+            contentKey="home.news.title"
+            defaultValue="Enterate antes que nadie."
+            label="Título newsletter"
+            as="h2"
+            className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-[#F8F7F4] tracking-tight"
+          />
+        </div>
 
         {/* Subtitle */}
-        <p className="mt-3 text-sm sm:text-base text-[#9E9D99] max-w-xl mx-auto leading-relaxed">
-          Recibí novedades, lanzamientos y beneficios de la comunidad {brandConfig.name}. Sin spam, solo lanzamientos y avisos exclusivos.
-        </p>
+        <div className="mt-3 max-w-xl mx-auto leading-relaxed">
+          <EditableText
+            contentKey="home.news.subtitle"
+            defaultValue={`Recibí novedades, lanzamientos y beneficios de la comunidad ${brandConfig.name}. Sin spam, solo lanzamientos y avisos exclusivos.`}
+            label="Bajada newsletter"
+            multiline
+            as="p"
+            className="text-sm sm:text-base text-[#9E9D99]"
+          />
+        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-8 max-w-md mx-auto space-y-3" noValidate>
@@ -82,9 +101,14 @@ export const NewsletterSection: React.FC = () => {
               />
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#C85A32] hover:bg-[#DF683B] text-white font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all whitespace-nowrap active:scale-[0.98] focus-ring"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#C85A32] hover:bg-[#DF683B] text-white font-semibold text-xs uppercase tracking-wider rounded-[2px] transition-all whitespace-nowrap active:scale-[0.98] focus-ring cursor-pointer"
               >
-                <span>Quiero suscribirme</span>
+                <EditableText
+                  contentKey="home.news.cta"
+                  defaultValue="Quiero suscribirme"
+                  label="Texto botón newsletter"
+                  as="span"
+                />
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -105,9 +129,14 @@ export const NewsletterSection: React.FC = () => {
             </div>
           )}
 
-          <p className="text-[11px] text-[#696762] text-left sm:text-center">
-            Podés cancelar tu suscripción en cualquier momento haciendo clic en el enlace al pie de cada correo.
-          </p>
+          <div className="text-[11px] text-[#696762] text-left sm:text-center">
+            <EditableText
+              contentKey="home.news.disclaimer"
+              defaultValue="Podés cancelar tu suscripción en cualquier momento haciendo clic en el enlace al pie de cada correo."
+              label="Aviso legal newsletter"
+              as="p"
+            />
+          </div>
         </form>
 
       </div>

@@ -6,6 +6,7 @@ import { useAdminAuth } from '../../context/AdminAuthContext';
 import { categoriesList } from '../../data/products';
 import { ProductCategory } from '../../types';
 import { MessageCircle, Mail, MapPin, Clock, ShieldCheck, Truck, CreditCard, RotateCcw } from 'lucide-react';
+import { EditableText } from '../admin/EditableText';
 
 export const Footer: React.FC = () => {
   const { navigateToCatalog, setIsSizeGuideOpen, setIsStoryModalOpen, setActiveView } = useUI();
@@ -20,27 +21,79 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pb-12 border-b border-[#1C1C1C] text-xs">
           <div className="p-4 bg-[#121212] border border-[#222] rounded-[2px]">
             <b className="block text-white uppercase font-display font-bold text-sm tracking-wide mb-1">
-              Catálogo Real
+              <EditableText
+                contentKey="footer.card1.title"
+                defaultValue="Catálogo Real"
+                label="Footer - Tarjeta 1 Título"
+                as="span"
+              />
             </b>
-            <span className="text-[#8E8B84]">Precios oficiales de Las Breñas con stock y personalización.</span>
+            <span className="text-[#8E8B84]">
+              <EditableText
+                contentKey="footer.card1.desc"
+                defaultValue="Precios oficiales de Las Breñas con stock y personalización."
+                label="Footer - Tarjeta 1 Detalle"
+                as="span"
+                multiline
+              />
+            </span>
           </div>
           <div className="p-4 bg-[#121212] border border-[#222] rounded-[2px]">
             <b className="block text-white uppercase font-display font-bold text-sm tracking-wide mb-1">
-              Personalización
+              <EditableText
+                contentKey="footer.card2.title"
+                defaultValue="Personalización"
+                label="Footer - Tarjeta 2 Título"
+                as="span"
+              />
             </b>
-            <span className="text-[#8E8B84]">Indumentaria deportiva, parches bordados y transferencias UV.</span>
+            <span className="text-[#8E8B84]">
+              <EditableText
+                contentKey="footer.card2.desc"
+                defaultValue="Indumentaria deportiva, parches bordados y transferencias UV."
+                label="Footer - Tarjeta 2 Detalle"
+                as="span"
+                multiline
+              />
+            </span>
           </div>
           <div className="p-4 bg-[#121212] border border-[#222] rounded-[2px]">
             <b className="block text-white uppercase font-display font-bold text-sm tracking-wide mb-1">
-              Retiro en Local
+              <EditableText
+                contentKey="footer.card3.title"
+                defaultValue="Retiro en Local"
+                label="Footer - Tarjeta 3 Título"
+                as="span"
+              />
             </b>
-            <span className="text-[#8E8B84]">{settings.contact.address}, Las Breñas sin costo de flete.</span>
+            <span className="text-[#8E8B84]">
+              <EditableText
+                contentKey="footer.card3.desc"
+                defaultValue={`${settings.contact.address}, Las Breñas sin costo de flete.`}
+                label="Footer - Tarjeta 3 Detalle"
+                as="span"
+                multiline
+              />
+            </span>
           </div>
           <div className="p-4 bg-[#121212] border border-[#222] rounded-[2px]">
             <b className="block text-white uppercase font-display font-bold text-sm tracking-wide mb-1">
-              WhatsApp Directo
+              <EditableText
+                contentKey="footer.card4.title"
+                defaultValue="WhatsApp Directo"
+                label="Footer - Tarjeta 4 Título"
+                as="span"
+              />
             </b>
-            <span className="text-[#8E8B84]">Atención personalizada y asesoramiento directo con Leo.</span>
+            <span className="text-[#8E8B84]">
+              <EditableText
+                contentKey="footer.card4.desc"
+                defaultValue="Atención personalizada y asesoramiento directo con Leo."
+                label="Footer - Tarjeta 4 Detalle"
+                as="span"
+                multiline
+              />
+            </span>
           </div>
         </div>
 
@@ -57,9 +110,15 @@ export const Footer: React.FC = () => {
               />
             </div>
 
-            <p className="text-sm text-[#8E8C86] max-w-sm leading-relaxed">
-              {settings.tagline}. Prendas, accesorios y piezas diseñadas para acompañar a tu equipo, tu marca y tu forma de moverte.
-            </p>
+            <div className="text-sm text-[#8E8C86] max-w-sm leading-relaxed">
+              <EditableText
+                contentKey="footer.brand_phrase"
+                defaultValue={`${settings.tagline}. Prendas, accesorios y piezas diseñadas para acompañar a tu equipo, tu marca y tu forma de moverte.`}
+                label="Footer - Frase descriptiva de la marca"
+                multiline
+                as="p"
+              />
+            </div>
 
             <div className="pt-2 space-y-2 text-xs text-[#B5B2AA]">
               <div className="flex items-start gap-2">
@@ -80,7 +139,12 @@ export const Footer: React.FC = () => {
           {/* Catalog Links */}
           <div className="space-y-4">
             <h3 className="font-display font-bold text-xs uppercase tracking-widest text-[#F8F7F4]">
-              Catálogo
+              <EditableText
+                contentKey="footer.col1.title"
+                defaultValue="Catálogo"
+                label="Footer - Columna 1 Título"
+                as="span"
+              />
             </h3>
             <ul className="space-y-2.5 text-xs">
               <li>
@@ -107,7 +171,12 @@ export const Footer: React.FC = () => {
           {/* Navigation Links */}
           <div className="space-y-4">
             <h3 className="font-display font-bold text-xs uppercase tracking-widest text-[#F8F7F4]">
-              Secciones
+              <EditableText
+                contentKey="footer.col2.title"
+                defaultValue="Secciones"
+                label="Footer - Columna 2 Título"
+                as="span"
+              />
             </h3>
             <ul className="space-y-2.5 text-xs">
               <li>
@@ -147,20 +216,40 @@ export const Footer: React.FC = () => {
           {/* Confidence and Guarantees */}
           <div className="space-y-4">
             <h3 className="font-display font-bold text-xs uppercase tracking-widest text-[#F8F7F4]">
-              Garantía de Taller
+              <EditableText
+                contentKey="footer.col3.title"
+                defaultValue="Garantía de Taller"
+                label="Footer - Columna 3 Título"
+                as="span"
+              />
             </h3>
             <div className="space-y-3 text-xs text-[#8E8C86]">
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-[#C8102E] shrink-0 mt-0.5" />
-                <span>Retiro exclusivo en nuestro local comercial en Las Breñas, Chaco.</span>
+                <EditableText
+                  contentKey="footer.guarantee1"
+                  defaultValue="Retiro exclusivo en nuestro local comercial en Las Breñas, Chaco."
+                  label="Garantía 1"
+                  as="span"
+                />
               </div>
               <div className="flex items-start gap-2.5">
                 <RotateCcw className="w-4 h-4 text-[#C8102E] shrink-0 mt-0.5" />
-                <span>Atención directa con Leo para confirmar talles, muestras y detalles.</span>
+                <EditableText
+                  contentKey="footer.guarantee2"
+                  defaultValue="Atención directa con Leo para confirmar talles, muestras y detalles."
+                  label="Garantía 2"
+                  as="span"
+                />
               </div>
               <div className="flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-[#C8102E] shrink-0 mt-0.5" />
-                <span>Garantía de confección e impresión UV de alta adherencia.</span>
+                <EditableText
+                  contentKey="footer.guarantee3"
+                  defaultValue="Garantía de confección e impresión UV de alta adherencia."
+                  label="Garantía 3"
+                  as="span"
+                />
               </div>
             </div>
           </div>
@@ -173,7 +262,12 @@ export const Footer: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
             <span className="text-[11px] uppercase tracking-wider text-[#9E9D99] flex items-center gap-1.5 font-semibold">
               <CreditCard className="w-3.5 h-3.5 text-[#C8102E]" />
-              Medios de pago:
+              <EditableText
+                contentKey="footer.payment_label"
+                defaultValue="Medios de pago:"
+                label="Etiqueta medios de pago"
+                as="span"
+              />
             </span>
             <span className="px-2 py-1 bg-[#161616] border border-[#2B2B2B] rounded-[2px] text-[10px] text-[#D0CDC5]">
               Efectivo en local
@@ -191,7 +285,12 @@ export const Footer: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-right">
             <p className="text-[11px] text-[#605E5A]">
-              © {new Date().getFullYear()} {brandConfig.name}. Todos los derechos reservados.
+              <EditableText
+                contentKey="footer.copyright"
+                defaultValue={`© ${new Date().getFullYear()} ${brandConfig.name}. Todos los derechos reservados.`}
+                label="Texto de copyright"
+                as="span"
+              />
             </p>
             <button
               type="button"

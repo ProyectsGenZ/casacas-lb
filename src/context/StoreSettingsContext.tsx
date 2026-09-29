@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db, IS_SANDBOX_ISOLATED } from '../config/firebase';
 import { SiteSettings, CategoryConfig, HeaderNavItem } from '../types/settings';
 import { brandConfig } from '../config/brandConfig';
 
@@ -74,6 +74,7 @@ export const defaultSettings: SiteSettings = {
   tagline: brandConfig.tagline,
   logoUrl: '/media/logo-casacas-oficial.png',
   headerNav: defaultHeaderNav,
+  customTexts: {},
   announcement: {
     enabled: true,
     badge: brandConfig.announcement.badge,
@@ -152,7 +153,7 @@ interface StoreSettingsContextType {
 }
 
 const SETTINGS_DOC = 'site_settings/content';
-const LOCAL_STORAGE_KEY = 'casacas_lb_site_settings';
+const LOCAL_STORAGE_KEY = 'casacas_lb_experimental_settings';
 
 const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>(undefined);
 
@@ -161,7 +162,15 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
-        return { ...defaultSettings, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        return {
+          ...defaultSettings,
+          ...parsed,
+          customTexts: {
+            ...(defaultSettings.customTexts || {}),
+            ...(parsed.customTexts || {})
+          }
+        };
       }
     } catch {
       // fallback
@@ -171,8 +180,12 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [isLoading, setIsLoading] = useState(true);
 
-  // Sync with Firestore
+  // Sync with Firestore (Omitido en modo experimental aislado)
   useEffect(() => {
+    if (IS_SANDBOX_ISOLATED) {
+      setIsLoading(false);
+      return;
+    }
     const docRef = doc(db, 'site_settings', 'content');
 
     const unsubscribe = onSnapshot(
@@ -232,12 +245,14 @@ const cleanForFirestore = <T,>(data: T): T => {
       console.warn('localStorage quota warning:', storageErr);
     }
 
-    try {
-      const docRef = doc(db, 'site_settings', 'content');
-      await setDoc(docRef, sanitized, { merge: true });
-    } catch (e) {
-      console.error('Error saving settings to Firestore:', e);
-      throw e;
+    if (!IS_SANDBOX_ISOLATED) {
+      try {
+        const docRef = doc(db, 'site_settings', 'content');
+        await setDoc(docRef, sanitized, { merge: true });
+      } catch (e) {
+        console.error('Error saving settings to Firestore:', e);
+        throw e;
+      }
     }
   };
 

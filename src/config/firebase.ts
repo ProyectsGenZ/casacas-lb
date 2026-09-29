@@ -19,3 +19,6 @@ export const db = initializeFirestore(app, {
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
+// Entorno Oficial: sincronización en vivo con Firebase Firestore
+export const IS_SANDBOX_ISOLATED = false;
+

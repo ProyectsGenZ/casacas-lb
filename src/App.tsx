@@ -40,6 +40,8 @@ import { SizeGuideModal } from './components/modals/SizeGuideModal';
 import { BrandStoryModal } from './components/modals/BrandStoryModal';
 import { WishlistModal } from './components/modals/WishlistModal';
 import { ToastContainer } from './components/ui/Toast';
+import { LiveEditProvider } from './context/LiveEditContext';
+import { SuperAdminBar } from './components/admin/SuperAdminBar';
 import { MessageCircle } from 'lucide-react';
 
 const MainContent: React.FC = () => {
@@ -139,6 +141,7 @@ const AppContent: React.FC = () => {
       <SizeGuideModal />
       <BrandStoryModal />
       <WishlistModal />
+      <SuperAdminBar />
       <ToastContainer />
     </div>
   );
@@ -151,11 +154,13 @@ export default function App() {
         <ProductManagementProvider>
           <ReviewsProvider>
             <AdminAuthProvider>
-              <CartProvider>
-                <WishlistProvider>
-                  <AppContent />
-                </WishlistProvider>
-              </CartProvider>
+              <LiveEditProvider>
+                <CartProvider>
+                  <WishlistProvider>
+                    <AppContent />
+                  </WishlistProvider>
+                </CartProvider>
+              </LiveEditProvider>
             </AdminAuthProvider>
           </ReviewsProvider>
         </ProductManagementProvider>

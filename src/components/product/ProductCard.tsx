@@ -7,6 +7,8 @@ import { brandConfig } from '../../config/brandConfig';
 import { Heart, Plus, Check, Sparkles, Flame } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
+import { useLiveEditor } from '../../context/LiveEditContext';
+
 interface ProductCardProps {
   product: Product;
   priority?: boolean;
@@ -16,6 +18,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { openProductDetail, showToast } = useUI();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const { isLiveEditMode, activeEditingKey } = useLiveEditor();
 
   const [isHovered, setIsHovered] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -26,7 +29,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   // Automatically cycle through ALL assigned images when hovered
   useEffect(() => {
-    if (!isHovered || product.images.length <= 1) {
+    if (!isHovered || product.images.length <= 1 || isLiveEditMode || Boolean(activeEditingKey)) {
       setActiveImageIndex(0);
       return;
     }
@@ -40,7 +43,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }, 1100);
 
     return () => clearInterval(interval);
-  }, [isHovered, product.images.length]);
+  }, [isHovered, product.images.length, isLiveEditMode, activeEditingKey]);
 
   const currentImage = product.images[activeImageIndex] || product.images[0];
 

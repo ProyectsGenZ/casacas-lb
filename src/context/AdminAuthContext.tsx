@@ -20,19 +20,29 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefin
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     try {
-      return sessionStorage.getItem(AUTH_STORAGE_KEY) === 'true';
+      return (
+        sessionStorage.getItem(AUTH_STORAGE_KEY) === 'true' ||
+        localStorage.getItem(AUTH_STORAGE_KEY) === 'true'
+      );
     } catch {
       return false;
     }
   });
 
   const [adminUser, setAdminUser] = useState<AdminUser | null>(() => {
-    if (sessionStorage.getItem(AUTH_STORAGE_KEY) === 'true') {
-      return {
-        name: 'Leo - CASACAS LB',
-        email: 'leo@casacaslb.com.ar',
-        role: 'Administrador Principal'
-      };
+    try {
+      const isAuth =
+        sessionStorage.getItem(AUTH_STORAGE_KEY) === 'true' ||
+        localStorage.getItem(AUTH_STORAGE_KEY) === 'true';
+      if (isAuth) {
+        return {
+          name: 'Leo - CASACAS LB',
+          email: 'leo@casacaslb.com.ar',
+          role: 'Administrador Principal'
+        };
+      }
+    } catch {
+      // ignore
     }
     return null;
   });
@@ -60,7 +70,12 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
       setIsAuthenticated(true);
       setAdminUser(userObj);
-      sessionStorage.setItem(AUTH_STORAGE_KEY, 'true');
+      try {
+        sessionStorage.setItem(AUTH_STORAGE_KEY, 'true');
+        localStorage.setItem(AUTH_STORAGE_KEY, 'true');
+      } catch {
+        // ignore
+      }
       return { success: true };
     }
 
@@ -73,7 +88,12 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const logout = () => {
     setIsAuthenticated(false);
     setAdminUser(null);
-    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   };
 
   return (

@@ -70,4 +70,5 @@ export interface SiteSettings {
     installmentsCount: number;
   };
   validCoupons: Record<string, number>;
+  customTexts?: Record<string, string>;
 }

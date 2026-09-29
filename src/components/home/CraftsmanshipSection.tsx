@@ -1,30 +1,43 @@
 import React from 'react';
 import { Layers, Droplets, CheckCircle, ShieldCheck } from 'lucide-react';
+import { EditableText } from '../admin/EditableText';
 
 export const CraftsmanshipSection: React.FC = () => {
   const specs = [
     {
       icon: Layers,
+      titleKey: 'home.craft.spec0.title',
       title: 'Gramaje Pesado y Caída Estructurada',
+      subKey: 'home.craft.spec0.subtitle',
       subtitle: 'Algodón 24/1 & Frisa 380g',
+      descKey: 'home.craft.spec0.desc',
       description: 'Seleccionamos hilos peinados de fibra larga. Las remeras y buzos tienen cuerpo propio y no pierden la forma ni se deforman en los hombros tras múltiples lavados.'
     },
     {
       icon: CheckCircle,
+      titleKey: 'home.craft.spec1.title',
       title: 'Costuras Reforzadas de 4 Hilos',
+      subKey: 'home.craft.spec1.subtitle',
       subtitle: 'Resistencia a la tracción urbana',
+      descKey: 'home.craft.spec1.desc',
       description: 'Remalle interior de cuatro hilos y pespunte de refuerzo en cuello, sisas y dobladillos. Cada unión está pensada para acompañar el movimiento activo diario.'
     },
     {
       icon: Droplets,
+      titleKey: 'home.craft.spec2.title',
       title: 'Teñido Reactivo y Fijación de Color',
+      subKey: 'home.craft.spec2.subtitle',
       subtitle: 'Lavados sostenibles',
+      descKey: 'home.craft.spec2.desc',
       description: 'Proceso de tintorería industrial con fijación térmica. Los negros y crudos se mantienen firmes y no manchan otras prendas durante el lavado en casa.'
     },
     {
       icon: ShieldCheck,
+      titleKey: 'home.craft.spec3.title',
       title: 'Guía de Cuidado Simple',
+      subKey: 'home.craft.spec3.subtitle',
       subtitle: 'Durabilidad garantizada',
+      descKey: 'home.craft.spec3.desc',
       description: 'Recomendamos agua fría (30°C), secado a la sombra en percha y plancha tibia del revés. Así extendés la vida útil de tus prendas por años.'
     }
   ];
@@ -35,15 +48,32 @@ export const CraftsmanshipSection: React.FC = () => {
         
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <span className="text-xs uppercase tracking-widest font-semibold text-[#C85A32]">
-            Transparencia y Calidad
-          </span>
-          <h2 id="materials-heading" className="font-display font-bold text-3xl sm:text-4xl text-[#F8F7F4] mt-1.5">
-            Materiales y Confección
-          </h2>
-          <p className="text-xs sm:text-sm text-[#9E9D99] mt-3 leading-relaxed">
-            Sin promesas exageradas ni fórmulas secretas: telas de alto gramaje, molderías probadas y terminaciones que se sienten desde el primer contacto.
-          </p>
+          <EditableText
+            contentKey="home.craft.eyebrow"
+            defaultValue="Transparencia y Calidad"
+            label="Subtítulo sección materiales"
+            as="span"
+            className="text-xs uppercase tracking-widest font-semibold text-[#C85A32]"
+          />
+          <div className="mt-1.5">
+            <EditableText
+              contentKey="home.craft.heading"
+              defaultValue="Materiales y Confección"
+              label="Título sección materiales"
+              as="h2"
+              className="font-display font-bold text-3xl sm:text-4xl text-[#F8F7F4]"
+            />
+          </div>
+          <div className="mt-3 leading-relaxed">
+            <EditableText
+              contentKey="home.craft.description"
+              defaultValue="Sin promesas exageradas ni fórmulas secretas: telas de alto gramaje, molderías probadas y terminaciones que se sienten desde el primer contacto."
+              label="Bajada sección materiales"
+              multiline
+              as="p"
+              className="text-xs sm:text-sm text-[#9E9D99]"
+            />
+          </div>
         </div>
 
         {/* 4 Cards Grid */}
@@ -60,19 +90,42 @@ export const CraftsmanshipSection: React.FC = () => {
                     <Icon className="w-5 h-5" />
                   </div>
                   <h3 className="font-display font-bold text-base text-[#F8F7F4] leading-snug">
-                    {item.title}
+                    <EditableText
+                      contentKey={item.titleKey}
+                      defaultValue={item.title}
+                      label={`Material ${index + 1} - Título`}
+                      as="span"
+                    />
                   </h3>
-                  <span className="inline-block text-[11px] font-mono text-[#C85A32] mt-1 uppercase tracking-wide">
-                    {item.subtitle}
-                  </span>
-                  <p className="text-xs text-[#9E9D99] mt-3 leading-relaxed">
-                    {item.description}
-                  </p>
+                  <div className="mt-1">
+                    <EditableText
+                      contentKey={item.subKey}
+                      defaultValue={item.subtitle}
+                      label={`Material ${index + 1} - Subtítulo`}
+                      as="span"
+                      className="inline-block text-[11px] font-mono text-[#C85A32] uppercase tracking-wide"
+                    />
+                  </div>
+                  <div className="mt-3 leading-relaxed">
+                    <EditableText
+                      contentKey={item.descKey}
+                      defaultValue={item.description}
+                      label={`Material ${index + 1} - Detalle`}
+                      multiline
+                      as="p"
+                      className="text-xs text-[#9E9D99]"
+                    />
+                  </div>
                 </div>
 
                 <div className="pt-5 mt-5 border-t border-[#202020] text-[11px] text-[#6E6C67] flex items-center gap-1.5 font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#C85A32]"></span>
-                  <span>Estándar VORÁGINE STUDIO</span>
+                  <EditableText
+                    contentKey="home.craft.standard_label"
+                    defaultValue="Estándar VORÁGINE STUDIO"
+                    label="Sello estándar taller"
+                    as="span"
+                  />
                 </div>
               </div>
             );

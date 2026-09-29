@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useReviews } from '../../context/ReviewsContext';
 import { ReviewSubmissionModal } from './ReviewSubmissionModal';
 import { Star, MessageSquareQuote, Plus, Camera, X, MapPin } from 'lucide-react';
+import { EditableText } from '../admin/EditableText';
 
 export const OpinionsSection: React.FC = () => {
   const { approvedReviews } = useReviews();
@@ -17,15 +18,33 @@ export const OpinionsSection: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <span className="text-xs uppercase tracking-widest font-semibold text-[#C8102E] flex items-center gap-1.5">
-                <MessageSquareQuote className="w-4 h-4" />
-                Lo que dicen de Casacas
+                <MessageSquareQuote className="w-4 h-4 shrink-0" />
+                <EditableText
+                  contentKey="home.opinions.eyebrow"
+                  defaultValue="Lo que dicen de Casacas"
+                  label="Subtítulo sección opiniones"
+                  as="span"
+                />
               </span>
-              <h2 id="opinions-heading" className="font-display font-bold text-3xl sm:text-4xl text-[#F8F7F4] mt-1.5">
-                Opiniones Reales
-              </h2>
-              <p className="text-xs sm:text-sm text-[#8E8B84] max-w-sm leading-relaxed mt-1">
-                Experiencias de clientes, clubes y emprendimientos que eligen el taller de CASACAS LB en Las Breñas.
-              </p>
+              <div className="mt-1.5">
+                <EditableText
+                  contentKey="home.opinions.heading"
+                  defaultValue="Opiniones Reales"
+                  label="Título sección opiniones"
+                  as="h2"
+                  className="font-display font-bold text-3xl sm:text-4xl text-[#F8F7F4]"
+                />
+              </div>
+              <div className="mt-1">
+                <EditableText
+                  contentKey="home.opinions.description"
+                  defaultValue="Experiencias de clientes, clubes y emprendimientos que eligen el taller de CASACAS LB en Las Breñas."
+                  label="Bajada sección opiniones"
+                  multiline
+                  as="p"
+                  className="text-xs sm:text-sm text-[#8E8B84] max-w-sm leading-relaxed"
+                />
+              </div>
             </div>
 
             {/* Leave Review Action Button */}
@@ -36,7 +55,12 @@ export const OpinionsSection: React.FC = () => {
                 className="inline-flex items-center gap-2 px-5 py-3 bg-[#C8102E] hover:bg-[#E01837] active:scale-[0.98] text-white font-display font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all shadow-lg shadow-[#C8102E]/20 cursor-pointer focus-ring"
               >
                 <Plus className="w-4 h-4" />
-                <span>Dejar mi opinión</span>
+                <EditableText
+                  contentKey="home.opinions.cta"
+                  defaultValue="Dejar mi opinión"
+                  label="Texto botón dejar opinión"
+                  as="span"
+                />
               </button>
             </div>
           </div>

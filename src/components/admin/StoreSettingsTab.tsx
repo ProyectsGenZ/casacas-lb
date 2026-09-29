@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useStoreSettings, defaultHeaderNav } from '../../context/StoreSettingsContext';
 import { useUI } from '../../context/UIContext';
 import { SiteSettings, CategoryConfig, HeroSlideConfig, HeaderNavItem } from '../../types/settings';
@@ -15,6 +15,7 @@ import {
   Upload,
   Image as ImageIcon,
   Sparkles,
+  ChevronLeft,
   ChevronRight,
   Compass,
   ArrowUp,
@@ -66,6 +67,42 @@ export const StoreSettingsTab: React.FC = () => {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+
+  const tabContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSectionChange = (
+    section: 'identity' | 'navigation' | 'hero' | 'categories' | 'contact' | 'shipping',
+    e?: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setActiveSection(section);
+    if (e?.currentTarget) {
+      e.currentTarget.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  };
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabContainerRef.current) {
+      const scrollAmount = direction === 'left' ? -220 : 220;
+      tabContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    if (tabContainerRef.current) {
+      const activeEl = tabContainerRef.current.querySelector<HTMLButtonElement>('[data-active="true"]');
+      if (activeEl) {
+        activeEl.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+      }
+    }
+  }, [activeSection]);
 
   // Handle general changes
   const handleInputChange = (field: keyof SiteSettings, value: any) => {
@@ -290,78 +327,109 @@ export const StoreSettingsTab: React.FC = () => {
         </button>
       </div>
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#222] overflow-x-auto pb-1 scrollbar-none">
+      {/* Navigation Sub-Tabs Bar with Smooth Auto-Scroll & Directional Controls */}
+      <div className="relative flex items-center">
         <button
-          onClick={() => setActiveSection('identity')}
-          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
-            activeSection === 'identity'
-              ? 'border-[#C8102E] text-white bg-[#181818]'
-              : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
-          }`}
+          type="button"
+          onClick={() => scrollTabs('left')}
+          className="flex items-center justify-center w-7 h-7 rounded-full bg-[#181818] hover:bg-[#252525] border border-[#333] hover:border-[#C8102E] text-[#888] hover:text-white transition-all mr-1.5 shrink-0 cursor-pointer shadow-md"
+          title="Desplazar pestañas hacia la izquierda"
+          aria-label="Desplazar pestañas hacia la izquierda"
         >
-          <Store className="w-4 h-4 text-[#C8102E]" />
-          <span>Identidad & Anuncios</span>
+          <ChevronLeft className="w-4 h-4" />
         </button>
 
-        <button
-          onClick={() => setActiveSection('navigation')}
-          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
-            activeSection === 'navigation'
-              ? 'border-[#C8102E] text-white bg-[#181818]'
-              : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
-          }`}
+        <div
+          ref={tabContainerRef}
+          className="flex items-center gap-2 border-b border-[#222] overflow-x-auto pb-1 scrollbar-none scroll-smooth flex-1"
         >
-          <Compass className="w-4 h-4 text-[#C8102E]" />
-          <span>Botones de Cabecera</span>
-        </button>
+          <button
+            onClick={(e) => handleSectionChange('identity', e)}
+            data-active={activeSection === 'identity'}
+            className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 shrink-0 ${
+              activeSection === 'identity'
+                ? 'border-[#C8102E] text-white bg-[#181818]'
+                : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
+            }`}
+          >
+            <Store className="w-4 h-4 text-[#C8102E]" />
+            <span>Identidad & Anuncios</span>
+          </button>
+
+          <button
+            onClick={(e) => handleSectionChange('navigation', e)}
+            data-active={activeSection === 'navigation'}
+            className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 shrink-0 ${
+              activeSection === 'navigation'
+                ? 'border-[#C8102E] text-white bg-[#181818]'
+                : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
+            }`}
+          >
+            <Compass className="w-4 h-4 text-[#C8102E]" />
+            <span>Botones de Cabecera</span>
+          </button>
+
+          <button
+            onClick={(e) => handleSectionChange('hero', e)}
+            data-active={activeSection === 'hero'}
+            className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 shrink-0 ${
+              activeSection === 'hero'
+                ? 'border-[#C8102E] text-white bg-[#181818]'
+                : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-[#C8102E]" />
+            <span>Portada Principal ({currentSlides.length} Banners)</span>
+          </button>
+
+          <button
+            onClick={(e) => handleSectionChange('categories', e)}
+            data-active={activeSection === 'categories'}
+            className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 shrink-0 ${
+              activeSection === 'categories'
+                ? 'border-[#C8102E] text-white bg-[#181818]'
+                : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
+            }`}
+          >
+            <Layers className="w-4 h-4 text-[#C8102E]" />
+            <span>Categorías & Fotos</span>
+          </button>
+
+          <button
+            onClick={(e) => handleSectionChange('contact', e)}
+            data-active={activeSection === 'contact'}
+            className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 shrink-0 ${
+              activeSection === 'contact'
+                ? 'border-[#C8102E] text-white bg-[#181818]'
+                : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
+            }`}
+          >
+            <Phone className="w-4 h-4 text-[#C8102E]" />
+            <span>WhatsApp y Redes</span>
+          </button>
+
+          <button
+            onClick={(e) => handleSectionChange('shipping', e)}
+            data-active={activeSection === 'shipping'}
+            className={`px-3.5 sm:px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 shrink-0 ${
+              activeSection === 'shipping'
+                ? 'border-[#C8102E] text-white bg-[#181818]'
+                : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
+            }`}
+          >
+            <Truck className="w-4 h-4 text-[#C8102E]" />
+            <span>Envíos y Promos</span>
+          </button>
+        </div>
 
         <button
-          onClick={() => setActiveSection('hero')}
-          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
-            activeSection === 'hero'
-              ? 'border-[#C8102E] text-white bg-[#181818]'
-              : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
-          }`}
+          type="button"
+          onClick={() => scrollTabs('right')}
+          className="flex items-center justify-center w-7 h-7 rounded-full bg-[#181818] hover:bg-[#252525] border border-[#333] hover:border-[#C8102E] text-[#888] hover:text-white transition-all ml-1.5 shrink-0 cursor-pointer shadow-md"
+          title="Desplazar pestañas hacia la derecha (ver Envíos)"
+          aria-label="Desplazar pestañas hacia la derecha"
         >
-          <Sparkles className="w-4 h-4 text-[#C8102E]" />
-          <span>Portada Principal ({currentSlides.length} Banners)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('categories')}
-          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
-            activeSection === 'categories'
-              ? 'border-[#C8102E] text-white bg-[#181818]'
-              : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
-          }`}
-        >
-          <Layers className="w-4 h-4 text-[#C8102E]" />
-          <span>Categorías & Fotos</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('contact')}
-          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
-            activeSection === 'contact'
-              ? 'border-[#C8102E] text-white bg-[#181818]'
-              : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
-          }`}
-        >
-          <Phone className="w-4 h-4 text-[#C8102E]" />
-          <span>WhatsApp y Redes</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('shipping')}
-          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-[2px] transition-colors whitespace-nowrap flex items-center gap-2 border-b-2 ${
-            activeSection === 'shipping'
-              ? 'border-[#C8102E] text-white bg-[#181818]'
-              : 'border-transparent text-[#888] hover:text-white hover:bg-[#141414]'
-          }`}
-        >
-          <Truck className="w-4 h-4 text-[#C8102E]" />
-          <span>Envíos y Promos</span>
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 

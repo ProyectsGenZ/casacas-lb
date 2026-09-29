@@ -4,6 +4,8 @@ import { useStoreSettings } from '../../context/StoreSettingsContext';
 import { useProductManagement } from '../../context/ProductManagementContext';
 import { ProductCategory, CategoryItem } from '../../types';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
+import { EditableText } from '../admin/EditableText';
+import { useLiveEditor } from '../../context/LiveEditContext';
 
 interface CategoryCardProps {
   category: CategoryItem;
@@ -13,6 +15,7 @@ interface CategoryCardProps {
 const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const { isLiveEditMode, activeEditingKey } = useLiveEditor();
 
   const images = category.images && category.images.length > 0
     ? category.images
@@ -20,7 +23,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
 
   // Cycle through example images when hovered
   useEffect(() => {
-    if (!isHovered || images.length <= 1) {
+    if (!isHovered || images.length <= 1 || isLiveEditMode || Boolean(activeEditingKey)) {
       setActiveImageIndex(0);
       return;
     }
@@ -30,7 +33,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
     }, 1300);
 
     return () => clearInterval(interval);
-  }, [isHovered, images.length]);
+  }, [isHovered, images.length, isLiveEditMode, activeEditingKey]);
 
   return (
     <button
@@ -114,9 +117,16 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
             {category.name}
           </h3>
 
-          <p className="text-xs text-[#A8A59E] line-clamp-2 hidden sm:block leading-relaxed">
-            {category.description}
-          </p>
+          <div className="hidden sm:block">
+            <EditableText
+              contentKey={`category.${category.slug}.description`}
+              defaultValue={category.description}
+              label={`Descripción ${category.name}`}
+              multiline
+              as="p"
+              className="text-xs text-[#A8A59E] line-clamp-2 leading-relaxed"
+            />
+          </div>
 
           <div className="pt-1 flex items-center gap-2">
             <span
@@ -148,18 +158,33 @@ export const CategoryBanners: React.FC = () => {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <span className="text-xs uppercase tracking-widest font-semibold text-[#C8102E]">
-              Explorá por colecciones
-            </span>
-            <h2 id="categories-heading" className="font-display font-extrabold text-3xl sm:text-4xl text-[#F8F7F4] mt-1 tracking-tight">
-              Categorías Principales
-            </h2>
+            <EditableText
+              contentKey="home.categories.eyebrow"
+              defaultValue="Explorá por colecciones"
+              label="Subtítulo sección colecciones"
+              as="span"
+              className="text-xs uppercase tracking-widest font-semibold text-[#C8102E]"
+            />
+            <div className="mt-1">
+              <EditableText
+                contentKey="home.categories.heading"
+                defaultValue="Categorías Principales"
+                label="Título sección colecciones"
+                as="h2"
+                className="font-display font-extrabold text-3xl sm:text-4xl text-[#F8F7F4] tracking-tight"
+              />
+            </div>
           </div>
           <button
             onClick={() => navigateToCatalog('Todos')}
             className="text-xs font-semibold uppercase tracking-wider text-[#9E9D99] hover:text-[#F8F7F4] transition-colors flex items-center gap-1 focus-ring cursor-pointer"
           >
-            <span>Ver todo el catálogo</span>
+            <EditableText
+              contentKey="home.categories.cta"
+              defaultValue="Ver todo el catálogo"
+              label="Texto botón ver catálogo"
+              as="span"
+            />
             <ArrowUpRight className="w-4 h-4 text-[#C8102E]" />
           </button>
         </div>

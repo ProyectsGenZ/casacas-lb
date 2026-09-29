@@ -9,7 +9,7 @@ import {
   getDocs,
   getDoc
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db, IS_SANDBOX_ISOLATED } from '../config/firebase';
 import { Product } from '../types';
 import { productsData } from '../data/products';
 import { useUI } from './UIContext';
@@ -26,7 +26,7 @@ interface ProductManagementContextType {
   getProductById: (id: string) => Product | undefined;
 }
 
-const STORAGE_KEY = 'casacas_lb_managed_products';
+const STORAGE_KEY = 'casacas_lb_experimental_products';
 
 const ProductManagementContext = createContext<ProductManagementContextType | undefined>(undefined);
 
@@ -71,8 +71,11 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     return productsData;
   });
 
-  // Sync with Firestore in real-time using the 'products' collection
+  // Sync with Firestore in real-time using the 'products' collection (Omitido en modo sandbox aislado)
   useEffect(() => {
+    if (IS_SANDBOX_ISOLATED) {
+      return;
+    }
     let unsubscribe: () => void = () => {};
     const prodsCol = collection(db, 'products');
 
@@ -179,15 +182,19 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     setProducts(updated);
     safeSaveLocal(updated);
 
-    // Save to Firestore collection as its own document (no 1MB single-document limit)
-    setDoc(doc(db, 'products', newProduct.id), cleanForFirestore(newProduct))
-      .then(() => {
-        showToast(`Producto "${newProduct.name}" guardado en la nube con éxito.`, 'success');
-      })
-      .catch((err: any) => {
-        console.error('Error guardando en Firestore:', err);
-        showToast(`Error al sincronizar con la nube: ${err.message || 'Verifique su conexión'}`, 'error');
-      });
+    if (!IS_SANDBOX_ISOLATED) {
+      // Save to Firestore collection as its own document (no 1MB single-document limit)
+      setDoc(doc(db, 'products', newProduct.id), cleanForFirestore(newProduct))
+        .then(() => {
+          showToast(`Producto "${newProduct.name}" guardado en la nube con éxito.`, 'success');
+        })
+        .catch((err: any) => {
+          console.error('Error guardando en Firestore:', err);
+          showToast(`Error al sincronizar con la nube: ${err.message || 'Verifique su conexión'}`, 'error');
+        });
+    } else {
+      showToast(`[Experimental] Producto "${newProduct.name}" creado localmente.`, 'success');
+    }
 
     return newProduct;
   };
@@ -210,14 +217,18 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     safeSaveLocal(updated);
 
     if (updatedItem) {
-      setDoc(doc(db, 'products', id), cleanForFirestore(updatedItem), { merge: true })
-        .then(() => {
-          showToast('Producto actualizado en la nube correctamente.', 'success');
-        })
-        .catch((err: any) => {
-          console.error('Error actualizando en Firestore:', err);
-          showToast(`Error al actualizar en la nube: ${err.message || 'Verifique su conexión'}`, 'error');
-        });
+      if (!IS_SANDBOX_ISOLATED) {
+        setDoc(doc(db, 'products', id), cleanForFirestore(updatedItem), { merge: true })
+          .then(() => {
+            showToast('Producto actualizado en la nube correctamente.', 'success');
+          })
+          .catch((err: any) => {
+            console.error('Error actualizando en Firestore:', err);
+            showToast(`Error al actualizar en la nube: ${err.message || 'Verifique su conexión'}`, 'error');
+          });
+      } else {
+        showToast('[Experimental] Producto actualizado localmente.', 'success');
+      }
     }
   };
 
@@ -227,14 +238,18 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     setProducts(updated);
     safeSaveLocal(updated);
 
-    deleteDoc(doc(db, 'products', id))
-      .then(() => {
-        showToast(`Producto "${target?.name || id}" eliminado del catálogo.`, 'info');
-      })
-      .catch((err: any) => {
-        console.error('Error eliminando en Firestore:', err);
-        showToast(`Error al eliminar de la nube: ${err.message || 'Verifique su conexión'}`, 'error');
-      });
+    if (!IS_SANDBOX_ISOLATED) {
+      deleteDoc(doc(db, 'products', id))
+        .then(() => {
+          showToast(`Producto "${target?.name || id}" eliminado del catálogo.`, 'info');
+        })
+        .catch((err: any) => {
+          console.error('Error eliminando en Firestore:', err);
+          showToast(`Error al eliminar de la nube: ${err.message || 'Verifique su conexión'}`, 'error');
+        });
+    } else {
+      showToast(`[Experimental] Producto "${target?.name || id}" eliminado localmente.`, 'info');
+    }
   };
 
   const updateStock = (id: string, newStock: number) => {
@@ -248,9 +263,11 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     setProducts(updated);
     safeSaveLocal(updated);
 
-    setDoc(doc(db, 'products', id), { stock: normalizedStock }, { merge: true }).catch((err) => {
-      console.error('Error actualizando stock en Firestore:', err);
-    });
+    if (!IS_SANDBOX_ISOLATED) {
+      setDoc(doc(db, 'products', id), { stock: normalizedStock }, { merge: true }).catch((err) => {
+        console.error('Error actualizando stock en Firestore:', err);
+      });
+    }
   };
 
   const moveProductOrder = (productId: string, direction: 'up' | 'down' | 'top') => {
@@ -287,20 +304,24 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     const targetProduct = newProducts.find((p) => p.id === productId);
     const newRank = updatedWithOrder.findIndex((p) => p.id === productId) + 1;
 
-    // Batch update order in Firestore
-    const batch = writeBatch(db);
-    updatedWithOrder.forEach((p) => {
-      batch.update(doc(db, 'products', p.id), { displayOrder: p.displayOrder });
-    });
-
-    batch.commit()
-      .then(() => {
-        showToast(`"${targetProduct?.name || 'Producto'}" ahora es el #${newRank} en el feed.`, 'success');
-      })
-      .catch((err) => {
-        console.error('Error al actualizar orden en Firestore:', err);
-        showToast('Error al actualizar orden en la nube.', 'error');
+    if (!IS_SANDBOX_ISOLATED) {
+      // Batch update order in Firestore
+      const batch = writeBatch(db);
+      updatedWithOrder.forEach((p) => {
+        batch.update(doc(db, 'products', p.id), { displayOrder: p.displayOrder });
       });
+
+      batch.commit()
+        .then(() => {
+          showToast(`"${targetProduct?.name || 'Producto'}" ahora es el #${newRank} en el feed.`, 'success');
+        })
+        .catch((err) => {
+          console.error('Error al actualizar orden en Firestore:', err);
+          showToast('Error al actualizar orden en la nube.', 'error');
+        });
+    } else {
+      showToast(`[Experimental] "${targetProduct?.name || 'Producto'}" ahora es el #${newRank}.`, 'success');
+    }
   };
 
   const reorderProducts = async (orderedIds: string[]): Promise<void> => {
@@ -329,16 +350,20 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     setProducts(orderedList);
     safeSaveLocal(orderedList);
 
-    try {
-      const batch = writeBatch(db);
-      orderedList.forEach((p) => {
-        batch.update(doc(db, 'products', p.id), { displayOrder: p.displayOrder });
-      });
-      await batch.commit();
-      showToast('Nuevo orden del feed guardado exitosamente.', 'success');
-    } catch (err: any) {
-      console.error('Error guardando reordenamiento:', err);
-      showToast(`Error al guardar orden: ${err.message || 'Error de conexión'}`, 'error');
+    if (!IS_SANDBOX_ISOLATED) {
+      try {
+        const batch = writeBatch(db);
+        orderedList.forEach((p) => {
+          batch.update(doc(db, 'products', p.id), { displayOrder: p.displayOrder });
+        });
+        await batch.commit();
+        showToast('Nuevo orden del feed guardado exitosamente.', 'success');
+      } catch (err: any) {
+        console.error('Error guardando reordenamiento:', err);
+        showToast(`Error al guardar orden: ${err.message || 'Error de conexión'}`, 'error');
+      }
+    } else {
+      showToast('[Experimental] Nuevo orden guardado localmente.', 'success');
     }
   };
 
@@ -351,18 +376,22 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     setProducts(initialWithOrder);
     safeSaveLocal(initialWithOrder);
 
-    const batch = writeBatch(db);
-    for (const item of initialWithOrder) {
-      batch.set(doc(db, 'products', item.id), cleanForFirestore(item));
+    if (!IS_SANDBOX_ISOLATED) {
+      const batch = writeBatch(db);
+      for (const item of initialWithOrder) {
+        batch.set(doc(db, 'products', item.id), cleanForFirestore(item));
+      }
+      batch.commit()
+        .then(() => {
+          showToast('Catálogo restablecido a los valores oficiales en la nube.', 'info');
+        })
+        .catch((err: any) => {
+          console.error('Error restableciendo catálogo en Firestore:', err);
+          showToast(`Error al restablecer catálogo: ${err.message || 'Error de conexión'}`, 'error');
+        });
+    } else {
+      showToast('[Experimental] Catálogo restablecido localmente a los originales.', 'info');
     }
-    batch.commit()
-      .then(() => {
-        showToast('Catálogo restablecido a los valores oficiales en la nube.', 'info');
-      })
-      .catch((err: any) => {
-        console.error('Error restableciendo catálogo en Firestore:', err);
-        showToast(`Error al restablecer catálogo: ${err.message || 'Error de conexión'}`, 'error');
-      });
   };
 
   const getProductById = (id: string) => {

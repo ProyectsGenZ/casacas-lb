@@ -25,9 +25,12 @@ import {
   ArrowUpDown,
   Filter,
   Store,
-  Star
+  Star,
+  Crown,
+  Pencil
 } from 'lucide-react';
 import { brandConfig } from '../../config/brandConfig';
+import { useLiveEditor } from '../../context/LiveEditContext';
 
 export const AdminDashboardView: React.FC = () => {
   const {
@@ -43,6 +46,7 @@ export const AdminDashboardView: React.FC = () => {
   const { logout, adminUser } = useAdminAuth();
   const { navigateToHome, showToast } = useUI();
   const { pendingReviews } = useReviews();
+  const { enterLiveEditAndGoHome } = useLiveEditor();
 
   // Main Tab State (Products vs CMS Store Settings vs Reviews Moderation)
   const [mainTab, setMainTab] = useState<'products' | 'cms' | 'reviews'>('products');
@@ -150,6 +154,16 @@ export const AdminDashboardView: React.FC = () => {
 
           {/* Admin User & Actions */}
           <div className="flex items-center gap-3">
+            {/* Superadmin Live Edit Quick Action */}
+            <button
+              onClick={enterLiveEditAndGoHome}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#C8102E] hover:bg-[#E01E37] text-white text-xs font-bold uppercase tracking-wider rounded-[2px] transition-all shadow-md cursor-pointer active:scale-95"
+              title="Ir a la tienda y editar los textos en vivo pasando el mouse"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-300" />
+              <span>Editar Web en Vivo</span>
+            </button>
+
             <button
               onClick={navigateToHome}
               className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1E1E1E] hover:bg-[#282828] border border-[#333] text-xs font-semibold text-[#DDD] rounded-[2px] transition-colors cursor-pointer"
@@ -186,7 +200,7 @@ export const AdminDashboardView: React.FC = () => {
 
       {/* Main Admin Content */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
+
         {/* Main Navigation Tabs */}
         <div className="flex flex-wrap items-center gap-3 border-b border-[#262626] pb-5">
           <button

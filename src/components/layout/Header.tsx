@@ -6,6 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { HeaderNavItem } from '../../types/settings';
 import { Search, ShoppingBag, Heart, Menu, ChevronDown, ArrowRight, Ruler, Sparkles } from 'lucide-react';
+import { EditableText } from '../admin/EditableText';
 
 export const Header: React.FC = () => {
   const {
@@ -217,7 +218,12 @@ export const Header: React.FC = () => {
                       : 'text-[#D0CDC6] hover:text-white'
                   }`}
                 >
-                  {item.label}
+                  <EditableText
+                    contentKey={`header.nav.${item.id}`}
+                    defaultValue={item.label}
+                    label={`Menú: ${item.label}`}
+                    as="span"
+                  />
                 </button>
               );
             })}

@@ -5,6 +5,7 @@ import { ProductCard } from '../product/ProductCard';
 import { useUI } from '../../context/UIContext';
 import { ProductCategory } from '../../types';
 import { ArrowRight } from 'lucide-react';
+import { EditableText } from '../admin/EditableText';
 
 export const FeaturedProducts: React.FC = () => {
   const { navigateToCatalog } = useUI();
@@ -28,12 +29,22 @@ export const FeaturedProducts: React.FC = () => {
         {/* Header with Title and Filter Tabs */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
-            <span className="text-xs uppercase tracking-widest font-semibold text-[#C8102E]">
-              Selección oficial
-            </span>
-            <h2 id="featured-heading" className="font-display font-bold text-3xl sm:text-4xl text-[#F8F7F4] mt-1">
-              Productos Destacados
-            </h2>
+            <EditableText
+              contentKey="home.featured.eyebrow"
+              defaultValue="Selección oficial"
+              label="Subtítulo sección destacados"
+              as="span"
+              className="text-xs uppercase tracking-widest font-semibold text-[#C8102E]"
+            />
+            <div className="mt-1">
+              <EditableText
+                contentKey="home.featured.heading"
+                defaultValue="Productos Destacados"
+                label="Título sección destacados"
+                as="h2"
+                className="font-display font-bold text-3xl sm:text-4xl text-[#F8F7F4]"
+              />
+            </div>
           </div>
 
           {/* Quick Category Tabs */}
@@ -72,7 +83,12 @@ export const FeaturedProducts: React.FC = () => {
             onClick={() => navigateToCatalog('Todos')}
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#1C1C1C] hover:bg-[#252525] border border-[#333] text-[#F8F7F4] text-xs font-semibold uppercase tracking-wider rounded-[2px] transition-all focus-ring active:scale-[0.98]"
           >
-            <span>Ver toda la colección ({products.length} prendas)</span>
+            <EditableText
+              contentKey="home.featured.cta"
+              defaultValue={`Ver toda la colección (${products.length} prendas)`}
+              label="Texto botón catálogo destacados"
+              as="span"
+            />
             <ArrowRight className="w-4 h-4 text-[#C85A32]" />
           </button>
         </div>

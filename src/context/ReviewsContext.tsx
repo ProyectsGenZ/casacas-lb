@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CustomerReview } from '../types';
 import { reviewsData } from '../data/products';
-import { db } from '../config/firebase';
+import { db, IS_SANDBOX_ISOLATED } from '../config/firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 interface ReviewsContextType {
@@ -15,7 +15,7 @@ interface ReviewsContextType {
   deleteReview: (reviewId: string) => Promise<void>;
 }
 
-const REVIEWS_STORAGE_KEY = 'casacas_customer_reviews';
+const REVIEWS_STORAGE_KEY = 'casacas_experimental_customer_reviews';
 const FIRESTORE_DOC_PATH = { collection: 'site_content', doc: 'reviews' };
 
 const initialSeedReviews: CustomerReview[] = reviewsData.map((r, i) => ({
@@ -43,8 +43,12 @@ export const ReviewsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Sync with Firestore in real-time
+  // Sync with Firestore in real-time (Omitido en modo experimental aislado)
   useEffect(() => {
+    if (IS_SANDBOX_ISOLATED) {
+      setIsLoading(false);
+      return;
+    }
     let unsubscribe: () => void = () => {};
 
     const syncFirestore = async () => {
@@ -95,14 +99,16 @@ export const ReviewsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const saveReviewsToCloud = async (newReviews: CustomerReview[]) => {
     setReviews(newReviews);
     localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(newReviews));
-    try {
-      const reviewDocRef = doc(db, FIRESTORE_DOC_PATH.collection, FIRESTORE_DOC_PATH.doc);
-      await setDoc(reviewDocRef, {
-        items: newReviews,
-        updatedAt: new Date().toISOString()
-      });
-    } catch (err) {
-      console.error('Error al guardar reseñas en Firestore:', err);
+    if (!IS_SANDBOX_ISOLATED) {
+      try {
+        const reviewDocRef = doc(db, FIRESTORE_DOC_PATH.collection, FIRESTORE_DOC_PATH.doc);
+        await setDoc(reviewDocRef, {
+          items: newReviews,
+          updatedAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error('Error al guardar reseñas en Firestore:', err);
+      }
     }
   };
 
