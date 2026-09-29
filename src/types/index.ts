@@ -55,6 +55,7 @@ export interface Product {
   images: string[];
   measurements?: SizeMeasurement[];
   isFeatured?: boolean;
+  displayOrder?: number;
   stock: number;
 }
 

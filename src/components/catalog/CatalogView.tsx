@@ -67,6 +67,11 @@ export const CatalogView: React.FC = () => {
         if (sortOption === 'precio-asc') return a.priceBase - b.priceBase;
         if (sortOption === 'precio-desc') return b.priceBase - a.priceBase;
         if (sortOption === 'recientes') return (b.tag === 'Nuevo' ? 1 : 0) - (a.tag === 'Nuevo' ? 1 : 0);
+        if (a.displayOrder != null && b.displayOrder != null) {
+          return a.displayOrder - b.displayOrder;
+        }
+        if (a.displayOrder != null) return -1;
+        if (b.displayOrder != null) return 1;
         return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
       });
   }, [catalogSearchQuery, selectedCategory, selectedSizes, onlyCustomizable, maxPrice, sortOption]);

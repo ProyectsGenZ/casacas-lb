@@ -5,6 +5,7 @@ import { useUI } from '../../context/UIContext';
 import { Product, ProductCategory } from '../../types';
 import { ProductFormModal } from './ProductFormModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { FeedReorderModal } from './FeedReorderModal';
 import { StoreSettingsTab } from './StoreSettingsTab';
 import { AdminReviewsTab } from './AdminReviewsTab';
 import { useReviews } from '../../context/ReviewsContext';
@@ -29,7 +30,16 @@ import {
 import { brandConfig } from '../../config/brandConfig';
 
 export const AdminDashboardView: React.FC = () => {
-  const { products, addProduct, updateProduct, deleteProduct, updateStock, resetToDefault } = useProductManagement();
+  const {
+    products,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    updateStock,
+    moveProductOrder,
+    reorderProducts,
+    resetToDefault
+  } = useProductManagement();
   const { logout, adminUser } = useAdminAuth();
   const { navigateToHome, showToast } = useUI();
   const { pendingReviews } = useReviews();
@@ -48,6 +58,8 @@ export const AdminDashboardView: React.FC = () => {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
 
   // KPIs
   const totalProducts = products.length;
@@ -236,7 +248,16 @@ export const AdminDashboardView: React.FC = () => {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <button
+              onClick={() => setIsReorderModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1F1F1F] hover:bg-[#2A2A2A] border border-[#3A3A3A] hover:border-[#C8102E] text-xs font-bold uppercase tracking-wider text-white rounded-[2px] transition-all cursor-pointer shadow-sm"
+              title="Organizar qué productos se muestran primero en la portada y catálogo"
+            >
+              <ArrowUpDown className="w-4 h-4 text-[#C8102E]" />
+              <span>Ordenar Feed</span>
+            </button>
+
             <button
               onClick={resetToDefault}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1A1A1A] hover:bg-[#242424] border border-[#333] text-xs font-semibold text-[#AAA] hover:text-white rounded-[2px] transition-colors cursor-pointer"
@@ -360,6 +381,7 @@ export const AdminDashboardView: React.FC = () => {
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-[#181818] border-b border-[#282828] text-[10px] uppercase font-mono tracking-wider text-[#8E8B84]">
+                  <th className="py-3 px-3 text-center">Orden Feed</th>
                   <th className="py-3 px-4">Producto</th>
                   <th className="py-3 px-3">SKU</th>
                   <th className="py-3 px-3">Categoría</th>
@@ -373,34 +395,91 @@ export const AdminDashboardView: React.FC = () => {
               <tbody className="divide-y divide-[#202020]">
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-[#777]">
+                    <td colSpan={9} className="py-12 text-center text-[#777]">
                       No se encontraron productos que coincidan con la búsqueda o filtros.
                     </td>
                   </tr>
                 ) : (
                   filteredProducts.map((product) => {
+                    const actualIndex = products.findIndex((p) => p.id === product.id);
                     const stock = product.stock ?? 0;
                     const isOutOfStock = stock === 0;
                     const isLowStock = stock > 0 && stock < 5;
+                    const isTopEight = actualIndex >= 0 && actualIndex < 8;
 
                     return (
                       <tr
                         key={product.id}
                         className="hover:bg-[#1A1A1A] transition-colors"
                       >
+                        {/* Feed Order Controls */}
+                        <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1.5 bg-[#171717] border border-[#2D2D2D] p-1 rounded-[2px]">
+                            <span
+                              className={`w-6 h-6 rounded-[2px] flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
+                                isTopEight
+                                  ? 'bg-[#C8102E] text-white shadow-md shadow-[#C8102E]/30'
+                                  : 'bg-[#222] text-[#888] border border-[#333]'
+                              }`}
+                              title={isTopEight ? `Posición #${actualIndex + 1} (Visible en portada principal)` : `Posición #${actualIndex + 1}`}
+                            >
+                              #{actualIndex + 1}
+                            </span>
+
+                            <div className="flex flex-col gap-0.5">
+                              <button
+                                type="button"
+                                onClick={() => moveProductOrder(product.id, 'up')}
+                                disabled={actualIndex <= 0}
+                                className="w-5 h-3 flex items-center justify-center text-[#AAA] hover:text-white disabled:opacity-20 disabled:cursor-not-allowed hover:bg-[#282828] rounded-[1px] transition-colors text-[9px] leading-none"
+                                title="Subir una posición en el feed"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveProductOrder(product.id, 'down')}
+                                disabled={actualIndex === products.length - 1}
+                                className="w-5 h-3 flex items-center justify-center text-[#AAA] hover:text-white disabled:opacity-20 disabled:cursor-not-allowed hover:bg-[#282828] rounded-[1px] transition-colors text-[9px] leading-none"
+                                title="Bajar una posición en el feed"
+                              >
+                                ▼
+                              </button>
+                            </div>
+
+                            {actualIndex > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => moveProductOrder(product.id, 'top')}
+                                className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-[#222] hover:bg-[#C8102E] text-[#BBB] hover:text-white rounded-[2px] transition-colors cursor-pointer border border-[#333] hover:border-[#C8102E]"
+                                title="Poner en 1° lugar de la portada"
+                              >
+                                1°
+                              </button>
+                            )}
+                          </div>
+                        </td>
+
                         {/* Image & Title */}
                         <td className="py-3.5 px-4 flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-[2px] bg-[#1E1E1E] border border-[#333] overflow-hidden shrink-0">
+                          <div className="w-11 h-11 rounded-[2px] bg-[#1E1E1E] border border-[#333] overflow-hidden shrink-0 flex items-center justify-center">
                             <img
                               src={product.images[0] || 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=200&q=80'}
                               alt={product.name}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain p-0.5"
                             />
                           </div>
                           <div>
-                            <span className="font-bold text-white text-sm block">
-                              {product.name}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-sm block">
+                                {product.name}
+                              </span>
+                              {isTopEight && (
+                                <span className="px-1.5 py-0.2 bg-[#C8102E]/20 text-[#FF6B6B] border border-[#C8102E]/30 text-[9px] font-bold uppercase rounded-[2px] hidden md:inline-block">
+                                  En Portada
+                                </span>
+                              )}
+                            </div>
                             {product.tag && (
                               <span className="text-[9px] uppercase tracking-wider text-[#C8102E] font-bold font-mono">
                                 • {product.tag}
@@ -541,6 +620,13 @@ export const AdminDashboardView: React.FC = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
         product={productToDelete}
+      />
+
+      <FeedReorderModal
+        isOpen={isReorderModalOpen}
+        onClose={() => setIsReorderModalOpen(false)}
+        products={products}
+        onSaveOrder={reorderProducts}
       />
 
     </div>

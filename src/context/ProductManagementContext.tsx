@@ -20,6 +20,8 @@ interface ProductManagementContextType {
   updateProduct: (id: string, updatedFields: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   updateStock: (id: string, newStock: number) => void;
+  moveProductOrder: (productId: string, direction: 'up' | 'down' | 'top') => void;
+  reorderProducts: (orderedIds: string[]) => Promise<void>;
   resetToDefault: () => void;
   getProductById: (id: string) => Product | undefined;
 }
@@ -107,8 +109,15 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
         (snapshot) => {
           if (!snapshot.empty) {
             const loaded = snapshot.docs.map((d) => d.data() as Product);
-            // Sort by numericId descending (newer products first)
-            loaded.sort((a, b) => (b.numericId || 0) - (a.numericId || 0));
+            // Sort by displayOrder ascending if defined, else fallback to numericId descending
+            loaded.sort((a, b) => {
+              if (a.displayOrder != null && b.displayOrder != null) {
+                return a.displayOrder - b.displayOrder;
+              }
+              if (a.displayOrder != null) return -1;
+              if (b.displayOrder != null) return 1;
+              return (b.numericId || 0) - (a.numericId || 0);
+            });
             setProducts(loaded);
             safeSaveLocal(loaded);
           }
@@ -133,10 +142,15 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
       ...productData,
       id: `prod-custom-${Date.now()}`,
       numericId: nextNumericId,
+      displayOrder: 1,
       stock: Math.max(0, productData.stock ?? 10)
     };
 
-    const updated = [newProduct, ...products];
+    // Place at beginning of feed and bump displayOrder of other products
+    const updated = [
+      newProduct,
+      ...products.map((p, idx) => ({ ...p, displayOrder: idx + 2 }))
+    ];
     setProducts(updated);
     safeSaveLocal(updated);
 
@@ -214,12 +228,106 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     });
   };
 
+  const moveProductOrder = (productId: string, direction: 'up' | 'down' | 'top') => {
+    const currentIndex = products.findIndex((p) => p.id === productId);
+    if (currentIndex === -1) return;
+
+    const newProducts = [...products];
+
+    if (direction === 'top') {
+      if (currentIndex === 0) return;
+      const [item] = newProducts.splice(currentIndex, 1);
+      newProducts.unshift(item);
+    } else if (direction === 'up') {
+      if (currentIndex === 0) return;
+      const temp = newProducts[currentIndex - 1];
+      newProducts[currentIndex - 1] = newProducts[currentIndex];
+      newProducts[currentIndex] = temp;
+    } else if (direction === 'down') {
+      if (currentIndex === newProducts.length - 1) return;
+      const temp = newProducts[currentIndex + 1];
+      newProducts[currentIndex + 1] = newProducts[currentIndex];
+      newProducts[currentIndex] = temp;
+    }
+
+    // Reassign sequential displayOrder: 1, 2, 3...
+    const updatedWithOrder = newProducts.map((p, idx) => ({
+      ...p,
+      displayOrder: idx + 1
+    }));
+
+    setProducts(updatedWithOrder);
+    safeSaveLocal(updatedWithOrder);
+
+    const targetProduct = newProducts.find((p) => p.id === productId);
+    const newRank = updatedWithOrder.findIndex((p) => p.id === productId) + 1;
+
+    // Batch update order in Firestore
+    const batch = writeBatch(db);
+    updatedWithOrder.forEach((p) => {
+      batch.update(doc(db, 'products', p.id), { displayOrder: p.displayOrder });
+    });
+
+    batch.commit()
+      .then(() => {
+        showToast(`"${targetProduct?.name || 'Producto'}" ahora es el #${newRank} en el feed.`, 'success');
+      })
+      .catch((err) => {
+        console.error('Error al actualizar orden en Firestore:', err);
+        showToast('Error al actualizar orden en la nube.', 'error');
+      });
+  };
+
+  const reorderProducts = async (orderedIds: string[]): Promise<void> => {
+    const productMap = new Map(products.map((p) => [p.id, p]));
+    const orderedList: Product[] = [];
+
+    orderedIds.forEach((id, idx) => {
+      const item = productMap.get(id);
+      if (item) {
+        orderedList.push({
+          ...item,
+          displayOrder: idx + 1
+        });
+        productMap.delete(id);
+      }
+    });
+
+    // Add any remaining items
+    productMap.forEach((item) => {
+      orderedList.push({
+        ...item,
+        displayOrder: orderedList.length + 1
+      });
+    });
+
+    setProducts(orderedList);
+    safeSaveLocal(orderedList);
+
+    try {
+      const batch = writeBatch(db);
+      orderedList.forEach((p) => {
+        batch.update(doc(db, 'products', p.id), { displayOrder: p.displayOrder });
+      });
+      await batch.commit();
+      showToast('Nuevo orden del feed guardado exitosamente.', 'success');
+    } catch (err: any) {
+      console.error('Error guardando reordenamiento:', err);
+      showToast(`Error al guardar orden: ${err.message || 'Error de conexión'}`, 'error');
+    }
+  };
+
   const resetToDefault = () => {
-    setProducts(productsData);
-    safeSaveLocal(productsData);
+    const initialWithOrder = productsData.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1
+    }));
+
+    setProducts(initialWithOrder);
+    safeSaveLocal(initialWithOrder);
 
     const batch = writeBatch(db);
-    for (const item of productsData) {
+    for (const item of initialWithOrder) {
       batch.set(doc(db, 'products', item.id), cleanForFirestore(item));
     }
     batch.commit()
@@ -244,6 +352,8 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
         updateProduct,
         deleteProduct,
         updateStock,
+        moveProductOrder,
+        reorderProducts,
         resetToDefault,
         getProductById
       }}
