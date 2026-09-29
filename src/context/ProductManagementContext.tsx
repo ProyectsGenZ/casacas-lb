@@ -98,6 +98,24 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
             batch.set(itemRef, cleanForFirestore(item));
           }
           await batch.commit();
+        } else {
+          // Automatically supplement products that have fewer than 3 images
+          const batch = writeBatch(db);
+          let needsUpdate = false;
+          prodsSnap.docs.forEach((docSnap) => {
+            const data = docSnap.data() as Product;
+            const seed = productsData.find((p) => p.id === data.id);
+            if (seed && (!data.images || data.images.length < 3)) {
+              const combined = Array.from(new Set([...(data.images || []), ...(seed.images || [])]));
+              if (combined.length > (data.images || []).length) {
+                batch.update(docSnap.ref, { images: combined });
+                needsUpdate = true;
+              }
+            }
+          });
+          if (needsUpdate) {
+            await batch.commit().catch((e) => console.warn('Images update batch notice:', e));
+          }
         }
       } catch (err) {
         console.warn('Products collection initialization notice:', err);
@@ -108,7 +126,14 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
         prodsCol,
         (snapshot) => {
           if (!snapshot.empty) {
-            const loaded = snapshot.docs.map((d) => d.data() as Product);
+            const loaded = snapshot.docs.map((d) => {
+              const item = d.data() as Product;
+              const seed = productsData.find((p) => p.id === item.id);
+              if (seed && (!item.images || item.images.length < 3)) {
+                item.images = Array.from(new Set([...(item.images || []), ...(seed.images || [])]));
+              }
+              return item;
+            });
             // Sort by displayOrder ascending if defined, else fallback to numericId descending
             loaded.sort((a, b) => {
               if (a.displayOrder != null && b.displayOrder != null) {
