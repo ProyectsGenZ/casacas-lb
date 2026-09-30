@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Product, ProductCategory, OfferType, ProductOffer, ProductColor } from '../../types';
 import { X, Image as ImageIcon, Save, Plus, Trash2, Upload, Flame, Sparkles } from 'lucide-react';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
 
 const compressAndReadFile = (file: File, maxWidth = 640, maxHeight = 640): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -45,7 +46,7 @@ const compressAndReadFile = (file: File, maxWidth = 640, maxHeight = 640): Promi
   });
 };
 
-const CATEGORIES: ProductCategory[] = ['Indumentaria', 'Accesorios', 'UV & vinilo', 'Banderas'];
+const DEFAULT_CATEGORIES: string[] = ['Indumentaria', 'Accesorios', 'UV & vinilo', 'Banderas'];
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -62,10 +63,12 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 }) => {
   const isEditing = Boolean(initialProduct);
 
+  const { settings } = useStoreSettings();
+
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
-    category: 'Indumentaria' as ProductCategory,
+    category: ((settings?.categories?.[0]?.name as ProductCategory) || 'Indumentaria') as ProductCategory,
     priceBase: 8500,
     priceCustom: '' as string | number,
     priceWholesale: '' as string | number,
@@ -91,6 +94,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       { name: 'Rojo Señal', hex: '#C8102E' }
     ] as ProductColor[]
   });
+
+  const availableCategories = useMemo(() => {
+    const fromSettings = (settings?.categories || []).map((c) => c.name);
+    const set = new Set([...fromSettings, ...DEFAULT_CATEGORIES]);
+    if (formData.category && !set.has(formData.category)) {
+      set.add(formData.category);
+    }
+    return Array.from(set);
+  }, [settings?.categories, formData.category]);
 
   const [newColorName, setNewColorName] = useState('');
   const [newColorHex, setNewColorHex] = useState('#1C1C1C');
@@ -386,7 +398,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 onChange={(e) => setFormData({ ...formData, category: e.target.value as ProductCategory })}
                 className="w-full bg-[#1C1C1C] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-2.5 text-sm text-[#F8F7F4] focus:outline-none"
               >
-                {CATEGORIES.map((cat) => (
+                {availableCategories.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>

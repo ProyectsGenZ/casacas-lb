@@ -2,7 +2,8 @@ export type ProductCategory =
   | 'Indumentaria'
   | 'Accesorios'
   | 'UV & vinilo'
-  | 'Banderas';
+  | 'Banderas'
+  | (string & {});
 
 export interface ProductColor {
   name: string;

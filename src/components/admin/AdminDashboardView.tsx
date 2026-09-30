@@ -9,6 +9,7 @@ import { FeedReorderModal } from './FeedReorderModal';
 import { StoreSettingsTab } from './StoreSettingsTab';
 import { AdminReviewsTab } from './AdminReviewsTab';
 import { useReviews } from '../../context/ReviewsContext';
+import { useStoreSettings } from '../../context/StoreSettingsContext';
 import {
   Package,
   Plus,
@@ -47,6 +48,14 @@ export const AdminDashboardView: React.FC = () => {
   const { navigateToHome, showToast } = useUI();
   const { pendingReviews } = useReviews();
   const { enterLiveEditAndGoHome } = useLiveEditor();
+  const { settings } = useStoreSettings();
+
+  const availableCategories = useMemo(() => {
+    const fromSettings = (settings?.categories || []).map((c) => c.name);
+    const defaults = ['Indumentaria', 'Accesorios', 'UV & vinilo', 'Banderas'];
+    const fromProds = products.map((p) => p.category);
+    return Array.from(new Set([...fromSettings, ...fromProds, ...defaults]));
+  }, [settings?.categories, products]);
 
   // Main Tab State (Products vs CMS Store Settings vs Reviews Moderation)
   const [mainTab, setMainTab] = useState<'products' | 'cms' | 'reviews'>('products');
@@ -365,10 +374,11 @@ export const AdminDashboardView: React.FC = () => {
                 className="bg-[#1A1A1A] border border-[#333] text-xs text-[#DDD] rounded-[2px] px-3 py-2 focus:outline-none focus:border-[#C8102E]"
               >
                 <option value="Todas">Todas las categorías</option>
-                <option value="Indumentaria">Indumentaria</option>
-                <option value="Accesorios">Accesorios</option>
-                <option value="UV & vinilo">UV & vinilo</option>
-                <option value="Banderas">Banderas</option>
+                {availableCategories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
             </div>
 

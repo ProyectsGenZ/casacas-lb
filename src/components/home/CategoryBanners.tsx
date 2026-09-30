@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useUI } from '../../context/UIContext';
 import { useStoreSettings } from '../../context/StoreSettingsContext';
 import { useProductManagement } from '../../context/ProductManagementContext';
 import { ProductCategory, CategoryItem } from '../../types';
-import { ArrowUpRight, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { EditableText } from '../admin/EditableText';
 import { useLiveEditor } from '../../context/LiveEditContext';
 
 interface CategoryCardProps {
   category: CategoryItem;
   onSelect: (category: ProductCategory) => void;
+  isDraggingRef?: React.MutableRefObject<boolean>;
 }
 
-const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
+const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect, isDraggingRef }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const { isLiveEditMode, activeEditingKey } = useLiveEditor();
@@ -37,28 +38,35 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
 
   return (
     <button
-      onClick={() => onSelect(category.slug)}
+      onClick={(e) => {
+        if (isDraggingRef?.current) {
+          e.preventDefault();
+          return;
+        }
+        onSelect(category.slug);
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`group relative h-84 sm:h-96 rounded-[2px] overflow-hidden border text-left focus-ring cursor-pointer transition-all duration-300 ${
+      className={`group relative h-88 sm:h-96 w-[280px] sm:w-[320px] lg:w-[340px] shrink-0 rounded-[2px] overflow-hidden border text-left focus-ring cursor-pointer select-none transition-all duration-300 ${
         isHovered
-          ? 'scale-[1.03] z-20 border-[#C8102E] shadow-2xl shadow-black/80'
+          ? 'scale-[1.02] z-20 border-[#C8102E] shadow-2xl shadow-black/80'
           : 'border-[#222222] bg-[#141414] hover:border-[#444]'
       }`}
       aria-label={`Ver categoría ${category.name}`}
     >
       {/* Background Images Crossfade */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {images.map((imgUrl, idx) => (
           <img
             key={imgUrl}
             src={imgUrl}
             alt={`${category.name} - ejemplo ${idx + 1}`}
-            className={`absolute inset-0 w-full h-full object-cover object-center filter transition-all duration-500 ease-out ${
+            className={`absolute inset-0 w-full h-full object-cover object-center filter transition-all duration-500 ease-out select-none ${
               idx === activeImageIndex
                 ? 'opacity-100 scale-105 brightness-[0.80]'
                 : 'opacity-0 scale-100 brightness-[0.70]'
             }`}
+            draggable={false}
           />
         ))}
       </div>
@@ -68,7 +76,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
       <div className="absolute inset-0 bg-gradient-to-b from-[#0E0E0E]/60 via-transparent to-transparent pointer-events-none" />
 
       {/* Content Overlay */}
-      <div className="absolute inset-0 p-5 flex flex-col justify-between z-10">
+      <div className="absolute inset-0 p-5 flex flex-col justify-between z-10 pointer-events-none">
         
         {/* Top Header: Image counter dots and Arrow button */}
         <div className="flex items-center justify-between">
@@ -117,7 +125,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
             {category.name}
           </h3>
 
-          <div className="hidden sm:block">
+          <div className="hidden sm:block pointer-events-auto">
             <EditableText
               contentKey={`category.${category.slug}.description`}
               defaultValue={category.description}
@@ -151,12 +159,70 @@ export const CategoryBanners: React.FC = () => {
   const { enabledCategories } = useStoreSettings();
   const { products } = useProductManagement();
 
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const isDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (!sliderRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [enabledCategories]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!sliderRef.current) return;
+    isDownRef.current = true;
+    isDraggingRef.current = false;
+    startXRef.current = e.pageX - sliderRef.current.offsetLeft;
+    scrollLeftRef.current = sliderRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDownRef.current || !sliderRef.current) return;
+    const x = e.pageX - sliderRef.current.offsetLeft;
+    const distance = Math.abs(x - startXRef.current);
+    if (distance > 5) {
+      isDraggingRef.current = true;
+    }
+    const walk = (x - startXRef.current) * 1.25;
+    sliderRef.current.scrollLeft = scrollLeftRef.current - walk;
+    checkScroll();
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDownRef.current = false;
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 60);
+  };
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (!sliderRef.current) return;
+    const scrollAmount = 350;
+    sliderRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+    setTimeout(checkScroll, 350);
+  };
+
   return (
     <section className="py-20 bg-[#0E0E0E] border-b border-[#1E1E1E]" aria-labelledby="categories-heading">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <EditableText
               contentKey="home.categories.eyebrow"
@@ -175,25 +241,75 @@ export const CategoryBanners: React.FC = () => {
               />
             </div>
           </div>
-          <button
-            onClick={() => navigateToCatalog('Todos')}
-            className="text-xs font-semibold uppercase tracking-wider text-[#9E9D99] hover:text-[#F8F7F4] transition-colors flex items-center gap-1 focus-ring cursor-pointer"
-          >
-            <EditableText
-              contentKey="home.categories.cta"
-              defaultValue="Ver todo el catálogo"
-              label="Texto botón ver catálogo"
-              as="span"
-            />
-            <ArrowUpRight className="w-4 h-4 text-[#C8102E]" />
-          </button>
+
+          <div className="flex items-center gap-4">
+            <span className="text-[11px] font-mono text-[#777] uppercase tracking-wider hidden sm:inline-block">
+              ← Arrastrá o navegá →
+            </span>
+
+            <button
+              onClick={() => navigateToCatalog('Todos')}
+              className="text-xs font-semibold uppercase tracking-wider text-[#9E9D99] hover:text-[#F8F7F4] transition-colors flex items-center gap-1 focus-ring cursor-pointer"
+            >
+              <EditableText
+                contentKey="home.categories.cta"
+                defaultValue="Ver catálogo"
+                label="Texto botón ver catálogo"
+                as="span"
+              />
+              <ArrowUpRight className="w-4 h-4 text-[#C8102E]" />
+            </button>
+
+            {/* Slider Navigation Arrows */}
+            <div className="flex items-center gap-1.5 border-l border-[#2B2B2B] pl-3">
+              <button
+                type="button"
+                onClick={() => handleScroll('left')}
+                disabled={!canScrollLeft}
+                className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                  canScrollLeft
+                    ? 'border-[#333] bg-[#161616] text-white hover:border-[#C8102E] hover:bg-[#222] cursor-pointer active:scale-95'
+                    : 'border-[#222] bg-[#121212] text-[#444] cursor-not-allowed opacity-40'
+                }`}
+                aria-label="Ver categorías anteriores"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScroll('right')}
+                disabled={!canScrollRight}
+                className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                  canScrollRight
+                    ? 'border-[#333] bg-[#161616] text-white hover:border-[#C8102E] hover:bg-[#222] cursor-pointer active:scale-95'
+                    : 'border-[#222] bg-[#121212] text-[#444] cursor-not-allowed opacity-40'
+                }`}
+                aria-label="Ver categorías siguientes"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Categories Grid with Zoom and Crossfading Multi-Example Preview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+        {/* Horizontal Drag-to-Scroll Categories Container */}
+        <div
+          ref={sliderRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          onScroll={checkScroll}
+          className="flex gap-5 sm:gap-6 overflow-x-auto pb-4 pt-1 cursor-grab active:cursor-grabbing select-none scrollbar-none"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
           {enabledCategories.map((category) => {
             const count = products.filter(
-              (p) => p.category.toLowerCase() === category.slug.toLowerCase()
+              (p) => p.category && p.category.toLowerCase() === category.slug.toLowerCase()
             ).length;
 
             const categoryItem: CategoryItem = {
@@ -210,6 +326,7 @@ export const CategoryBanners: React.FC = () => {
                 key={category.id}
                 category={categoryItem}
                 onSelect={(cat) => navigateToCatalog(cat)}
+                isDraggingRef={isDraggingRef}
               />
             );
           })}
@@ -219,3 +336,4 @@ export const CategoryBanners: React.FC = () => {
     </section>
   );
 };
+
