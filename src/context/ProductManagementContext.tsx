@@ -14,6 +14,8 @@ import { Product } from '../types';
 import { productsData } from '../data/products';
 import { useUI } from './UIContext';
 
+import { idbGet, idbSet } from '../utils/idbStorage';
+
 interface ProductManagementContextType {
   products: Product[];
   addProduct: (productData: Omit<Product, 'id' | 'numericId'>) => Product;
@@ -37,19 +39,18 @@ const cleanForFirestore = <T,>(data: T): T => {
 };
 
 const safeSaveLocal = (items: Product[]) => {
+  // 1. Guardar completo con todas las fotos en IndexedDB (cientos de megabytes en disco del navegador)
+  idbSet(STORAGE_KEY, cleanForFirestore(items));
+
+  // 2. Guardar versión compacta en localStorage sin cadenas Base64 pesadas para no colapsar el límite de 5 MB
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanForFirestore(items)));
-  } catch (storageErr) {
-    console.warn('localStorage quota warning, using compact fallback:', storageErr);
-    try {
-      const compact = items.map((p) => ({
-        ...p,
-        images: p.images.map((img) => (img.startsWith('data:image') && img.length > 500 ? '' : img))
-      }));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(compact));
-    } catch {
-      // Ignore if storage is completely filled
-    }
+    const compact = items.map((p) => ({
+      ...p,
+      images: p.images.map((img) => (img.startsWith('data:image') && img.length > 500 ? '' : img))
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(compact));
+  } catch {
+    // Ignore si localStorage está saturado por otros datos
   }
 };
 
@@ -70,6 +71,15 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
     }
     return productsData;
   });
+
+  // Carga inicial profunda desde IndexedDB (recupera fotos completas locales sin límite de 5 MB)
+  useEffect(() => {
+    idbGet<Product[]>(STORAGE_KEY).then((cached) => {
+      if (Array.isArray(cached) && cached.length > 0) {
+        setProducts(cached);
+      }
+    });
+  }, []);
 
   // Sync with Firestore in real-time using the 'products' collection (Omitido en modo sandbox aislado)
   useEffect(() => {

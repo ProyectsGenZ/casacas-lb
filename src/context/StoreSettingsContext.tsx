@@ -3,6 +3,7 @@ import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { db, IS_SANDBOX_ISOLATED } from '../config/firebase';
 import { SiteSettings, CategoryConfig, HeaderNavItem } from '../types/settings';
 import { brandConfig } from '../config/brandConfig';
+import { idbGet, idbSet } from '../utils/idbStorage';
 
 export const defaultHeaderNav: HeaderNavItem[] = [
   { id: 'nav-home', label: 'Inicio', type: 'home', target: '/', enabled: true },
@@ -180,6 +181,23 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [isLoading, setIsLoading] = useState(true);
 
+  // Carga inicial profunda desde IndexedDB (recupera configuración completa con fotos sin límite de 5 MB)
+  useEffect(() => {
+    idbGet<SiteSettings>(LOCAL_STORAGE_KEY).then((cached) => {
+      if (cached) {
+        setSettings((prev) => ({
+          ...prev,
+          ...cached,
+          hero: {
+            ...prev.hero,
+            ...(cached.hero || {}),
+            slides: cached.hero?.slides && cached.hero.slides.length > 0 ? cached.hero.slides : prev.hero.slides
+          }
+        }));
+      }
+    });
+  }, []);
+
   // Sync with Firestore (Omitido en modo experimental aislado)
   useEffect(() => {
     if (IS_SANDBOX_ISOLATED) {
@@ -209,8 +227,23 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
                 : (prev.categories && prev.categories.length > 0 ? prev.categories : defaultCategories),
               headerNav: data.headerNav && data.headerNav.length > 0 ? data.headerNav : (prev.headerNav || defaultHeaderNav)
             };
+            
+            // 1. Guardar en IndexedDB local sin límites de cuota
+            idbSet(LOCAL_STORAGE_KEY, merged);
+
+            // 2. Guardar versión ligera en localStorage
             try {
-              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
+              const compact = {
+                ...merged,
+                hero: {
+                  ...merged.hero,
+                  slides: merged.hero?.slides?.map((s) => ({
+                    ...s,
+                    bgImage: s.bgImage?.startsWith('data:image') && s.bgImage.length > 500 ? '' : s.bgImage
+                  }))
+                }
+              };
+              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(compact));
             } catch {
               // ignore
             }
@@ -244,8 +277,21 @@ const cleanForFirestore = <T,>(data: T): T => {
     const sanitized = cleanForFirestore(updated);
     setSettings(sanitized);
 
+    // Guardar versión completa en IndexedDB
+    idbSet(LOCAL_STORAGE_KEY, sanitized);
+
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sanitized));
+      const compact = {
+        ...sanitized,
+        hero: {
+          ...sanitized.hero,
+          slides: sanitized.hero?.slides?.map((s) => ({
+            ...s,
+            bgImage: s.bgImage?.startsWith('data:image') && s.bgImage.length > 500 ? '' : s.bgImage
+          }))
+        }
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(compact));
     } catch (storageErr) {
       console.warn('localStorage quota warning:', storageErr);
     }
