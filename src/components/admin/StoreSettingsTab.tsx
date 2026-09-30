@@ -59,16 +59,36 @@ const compressAndReadFile = (file: File, maxWidth = 1280, maxHeight = 720): Prom
 };
 
 export const StoreSettingsTab: React.FC = () => {
-  const { settings, updateSettings } = useStoreSettings();
+  const { settings, updateSettings, isLoading } = useStoreSettings();
   const { showToast } = useUI();
 
   const [formData, setFormData] = useState<SiteSettings>(settings);
+  const [isDirty, setIsDirty] = useState(false);
   const [activeSection, setActiveSection] = useState<'identity' | 'navigation' | 'hero' | 'categories' | 'contact' | 'shipping'>('identity');
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
   const tabContainerRef = useRef<HTMLDivElement>(null);
+
+  // Sincronizar formData cuando los datos de Firestore cargan o cambian en la nube
+  useEffect(() => {
+    if (!isDirty) {
+      setFormData(settings);
+    }
+  }, [settings, isDirty]);
+
+  // Advertir al usuario si intenta recargar la página con cambios sin guardar
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   const handleSectionChange = (
     section: 'identity' | 'navigation' | 'hero' | 'categories' | 'contact' | 'shipping',
@@ -106,10 +126,12 @@ export const StoreSettingsTab: React.FC = () => {
 
   // Handle general changes
   const handleInputChange = (field: keyof SiteSettings, value: any) => {
+    setIsDirty(true);
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleNestedChange = (parent: keyof SiteSettings, field: string, value: any) => {
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       [parent]: {
@@ -286,6 +308,7 @@ export const StoreSettingsTab: React.FC = () => {
     setIsSaving(true);
     try {
       await updateSettings(formData);
+      setIsDirty(false);
       showToast('¡Configuración guardada en Firebase y actualizada en vivo!', 'success');
     } catch (e) {
       console.error(e);
@@ -1334,17 +1357,34 @@ export const StoreSettingsTab: React.FC = () => {
       )}
 
       {/* Floating Bottom Bar for Quick Save */}
-      <div className="sticky bottom-4 z-30 p-4 bg-[#181818]/95 backdrop-blur-md border border-[#333] rounded-[4px] shadow-2xl flex items-center justify-between">
-        <span className="text-xs text-[#AAA] hidden sm:inline">
-          Los cambios se guardan y sincronizan en vivo en <b>Firebase Firestore</b> al hacer clic en guardar.
+      <div className={`sticky bottom-4 z-30 p-4 rounded-[4px] shadow-2xl flex items-center justify-between transition-all ${
+        isDirty
+          ? 'bg-[#1E1111]/95 border-2 border-[#C8102E] shadow-[#C8102E]/20'
+          : 'bg-[#181818]/95 backdrop-blur-md border border-[#333]'
+      }`}>
+        <span className="text-xs text-[#AAA] flex items-center gap-2">
+          {isDirty ? (
+            <span className="text-[#FF8080] font-bold flex items-center gap-1.5 animate-pulse">
+              <span>⚠️</span>
+              <span>Tienes cambios pendientes en este apartado sin guardar en la nube.</span>
+            </span>
+          ) : (
+            <span className="hidden sm:inline">
+              Los cambios se guardan y sincronizan en vivo en <b>Firebase Firestore</b> al hacer clic en guardar.
+            </span>
+          )}
         </span>
         <button
           onClick={handleSaveAll}
           disabled={isSaving}
-          className="ml-auto inline-flex items-center gap-2 px-6 py-2.5 bg-[#C8102E] hover:bg-[#A00C24] text-white font-bold text-xs uppercase tracking-wider rounded-[2px] shadow-lg transition-transform active:scale-95 cursor-pointer"
+          className={`ml-auto inline-flex items-center gap-2 px-6 py-2.5 font-bold text-xs uppercase tracking-wider rounded-[2px] shadow-lg transition-transform active:scale-95 cursor-pointer ${
+            isDirty
+              ? 'bg-[#C8102E] hover:bg-[#A00C24] text-white shadow-[#C8102E]/40 scale-105'
+              : 'bg-[#C8102E] hover:bg-[#A00C24] text-white'
+          }`}
         >
           <Save className="w-4 h-4" />
-          <span>{isSaving ? 'Guardando...' : 'Guardar Cambios'}</span>
+          <span>{isSaving ? 'Guardando en la nube...' : isDirty ? 'Guardar Cambios Pendientes' : 'Guardar Cambios'}</span>
         </button>
       </div>
     </div>

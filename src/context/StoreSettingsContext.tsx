@@ -200,8 +200,13 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
               hero: {
                 ...prev.hero,
                 ...(data.hero || {}),
-                slides: data.hero?.slides && data.hero.slides.length > 0 ? data.hero.slides : defaultSettings.hero.slides
+                slides: data.hero?.slides && data.hero.slides.length > 0
+                  ? data.hero.slides
+                  : (prev.hero?.slides && prev.hero.slides.length > 0 ? prev.hero.slides : defaultSettings.hero.slides)
               },
+              categories: data.categories && data.categories.length > 0
+                ? data.categories
+                : (prev.categories && prev.categories.length > 0 ? prev.categories : defaultCategories),
               headerNav: data.headerNav && data.headerNav.length > 0 ? data.headerNav : (prev.headerNav || defaultHeaderNav)
             };
             try {
