@@ -37,10 +37,8 @@ Estas reglas son obligatorias y deben respetarse en cada interacción y tarea so
 
 ---
 
-### 6. Estándares de Diseño y Referencias Visuales
-* Utilizar como inspiración y referencia los patrones de:
-  * **Refero**: Grillas editoriales, jerarquía tipográfica, micro-superficies oscuras con bordes finos.
-  * **Kexsio & Design Spells**: Micro-interacciones táctiles, rebotes dinámicos sutiles, feedback inmediato al usuario.
-  * **MotionSites**: Motion fluido, scroll-driven reveals y transiciones suaves de sección sin degradar el rendimiento.
-  * **ThreeUI**: Efectos de iluminación reactiva (sheen/spotlight), profundidad y sensación espacial cuidada.
-* Priorizar siempre **consistencia visual, alta performance, accesibilidad (WCAG) y responsive design**.
+### 6. Criterio de Diseño y Referencias Visuales
+* Las referencias (Refero, Kexsio, Design Spells, MotionSites, ThreeUI) son **guías de inspiración flexibles**, no reglas absolutas:
+  * Se pueden incorporar patrones modernos de esas fuentes o de cualquier otra buena práctica de diseño web actual según lo requiera cada componente.
+  * El objetivo primordial es que la interfaz se sienta **premium, moderna y viva**.
+* Priorizar siempre: **consistencia estética, alta performance, accesibilidad (WCAG) y diseño responsive impecable**.
