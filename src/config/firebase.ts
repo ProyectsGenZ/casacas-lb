@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { initializeFirestore } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   projectId: "proyects-f1c7e",
@@ -18,7 +19,9 @@ export const db = initializeFirestore(app, {
 });
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export const storage = getStorage(app);
 
 // Entorno Oficial: sincronización en vivo con Firebase Firestore
 export const IS_SANDBOX_ISOLATED = false;
+
 

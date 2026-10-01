@@ -212,6 +212,16 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
         if (snapshot.exists()) {
           const data = snapshot.data() as Partial<SiteSettings>;
           setSettings((prev) => {
+            // Preservar categorías locales si en Firestore solo están las iniciales y el usuario tenía categorías añadidas
+            let finalCategories = data.categories && data.categories.length > 0 ? data.categories : prev.categories;
+            if (prev.categories && prev.categories.length > 0 && finalCategories) {
+              const currentNames = new Set(finalCategories.map((c) => c.name.trim().toLowerCase()));
+              const customLocal = prev.categories.filter((c) => !currentNames.has(c.name.trim().toLowerCase()));
+              if (customLocal.length > 0) {
+                finalCategories = [...finalCategories, ...customLocal];
+              }
+            }
+
             const merged: SiteSettings = {
               ...prev,
               ...data,
@@ -222,9 +232,7 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
                   ? data.hero.slides
                   : (prev.hero?.slides && prev.hero.slides.length > 0 ? prev.hero.slides : defaultSettings.hero.slides)
               },
-              categories: data.categories && data.categories.length > 0
-                ? data.categories
-                : (prev.categories && prev.categories.length > 0 ? prev.categories : defaultCategories),
+              categories: finalCategories && finalCategories.length > 0 ? finalCategories : defaultCategories,
               headerNav: data.headerNav && data.headerNav.length > 0 ? data.headerNav : (prev.headerNav || defaultHeaderNav)
             };
             
@@ -250,9 +258,12 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
             return merged;
           });
         } else {
-          // Initialize doc in Firestore if it doesn't exist
-          setDoc(docRef, defaultSettings).catch((err) => {
-            console.error('Error initializing site_settings in Firestore:', err);
+          // Initialize doc in Firestore with existing local settings if available
+          idbGet<SiteSettings>(LOCAL_STORAGE_KEY).then((cached) => {
+            const initialDoc = cached || defaultSettings;
+            setDoc(docRef, cleanForFirestore(initialDoc)).catch((err) => {
+              console.error('Error initializing site_settings in Firestore:', err);
+            });
           });
         }
         setIsLoading(false);

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useProductManagement } from '../../context/ProductManagementContext';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { useUI } from '../../context/UIContext';
@@ -28,7 +28,9 @@ import {
   Store,
   Star,
   Crown,
-  Pencil
+  Pencil,
+  Download,
+  Upload
 } from 'lucide-react';
 import { brandConfig } from '../../config/brandConfig';
 import { useLiveEditor } from '../../context/LiveEditContext';
@@ -42,13 +44,75 @@ export const AdminDashboardView: React.FC = () => {
     updateStock,
     moveProductOrder,
     reorderProducts,
-    resetToDefault
+    restoreBackupProducts
   } = useProductManagement();
   const { logout, adminUser } = useAdminAuth();
   const { navigateToHome, showToast } = useUI();
   const { pendingReviews } = useReviews();
   const { enterLiveEditAndGoHome } = useLiveEditor();
   const { settings } = useStoreSettings();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExportBackup = () => {
+    try {
+      const backupData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        store: settings?.brandName || 'CASACAS LB',
+        totalCount: products.length,
+        products: products
+      };
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateFormatted = new Date().toISOString().slice(0, 10);
+      a.download = `backup-productos-casacas-lb-${dateFormatted}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`¡Copia de seguridad descargada con éxito! (${products.length} productos con fotos respaldados).`, 'success');
+    } catch (err: any) {
+      console.error('Error al exportar copia de seguridad:', err);
+      showToast('Error al generar la copia de seguridad.', 'error');
+    }
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        const importedItems: Product[] = Array.isArray(parsed)
+          ? parsed
+          : (Array.isArray(parsed.products) ? parsed.products : []);
+
+        if (!importedItems || importedItems.length === 0) {
+          throw new Error('El archivo no contiene un catálogo de productos válido.');
+        }
+
+        const confirmRestore = window.confirm(
+          `Se encontraron ${importedItems.length} productos en la copia de seguridad.\n\n¿Deseas restaurar y sincronizar este catálogo en Firebase?`
+        );
+
+        if (confirmRestore) {
+          await restoreBackupProducts(importedItems);
+        }
+      } catch (err: any) {
+        console.error('Error al importar copia de seguridad:', err);
+        showToast(err.message || 'Error al procesar el archivo de copia de seguridad.', 'error');
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const availableCategories = useMemo(() => {
     const fromSettings = (settings?.categories || []).map((c) => c.name);
@@ -281,14 +345,32 @@ export const AdminDashboardView: React.FC = () => {
               <span>Ordenar Feed</span>
             </button>
 
+            {/* Exportar Copia de Seguridad */}
             <button
-              onClick={resetToDefault}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1A1A1A] hover:bg-[#242424] border border-[#333] text-xs font-semibold text-[#AAA] hover:text-white rounded-[2px] transition-colors cursor-pointer"
-              title="Restaura los 27 productos originales oficiales"
+              onClick={handleExportBackup}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-[#171717] hover:bg-[#222] border border-[#333] hover:border-emerald-500/50 text-xs font-semibold text-[#DDD] hover:text-white rounded-[2px] transition-all cursor-pointer shadow-sm"
+              title="Descarga una copia completa de tus productos, fotos, precios y stock a tu computadora (.json)"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Restablecer Originales</span>
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Copia de Seguridad</span>
+              <span className="sm:hidden">Backup</span>
             </button>
+
+            {/* Restaurar Copia de Seguridad */}
+            <label
+              className="inline-flex items-center gap-2 px-3 py-2.5 bg-[#171717] hover:bg-[#222] border border-[#333] text-xs font-semibold text-[#888] hover:text-[#DDD] rounded-[2px] transition-colors cursor-pointer"
+              title="Restaurar productos desde un archivo de copia de seguridad (.json)"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Restaurar</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={handleImportBackup}
+              />
+            </label>
 
             <button
               onClick={handleOpenAddModal}

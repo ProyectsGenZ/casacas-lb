@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useStoreSettings, defaultHeaderNav } from '../../context/StoreSettingsContext';
 import { useUI } from '../../context/UIContext';
 import { SiteSettings, CategoryConfig, HeroSlideConfig, HeaderNavItem } from '../../types/settings';
+import { uploadImageToFirebaseStorage } from '../../utils/firebaseStorage';
 import {
   Store,
   Layers,
@@ -22,41 +23,6 @@ import {
   ArrowDown,
   RotateCcw
 } from 'lucide-react';
-
-const compressAndReadFile = (file: File, maxWidth = 1280, maxHeight = 720): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const elem = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-        elem.width = width;
-        elem.height = height;
-        const ctx = elem.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        const dataUrl = elem.toDataURL('image/jpeg', 0.75);
-        resolve(dataUrl);
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
 
 export const StoreSettingsTab: React.FC = () => {
   const { settings, updateSettings, isLoading } = useStoreSettings();
@@ -141,19 +107,25 @@ export const StoreSettingsTab: React.FC = () => {
     }));
   };
 
-  // Upload file helper
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
+  // Upload file helper (sube directamente a Firebase Cloud Storage)
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    callback: (url: string) => void,
+    folder: 'settings' | 'categories' = 'settings'
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      showToast('Procesando imagen...', 'info');
-      const base64Url = await compressAndReadFile(file);
-      callback(base64Url);
-      showToast('Imagen cargada con éxito. Recuerda guardar cambios.', 'success');
+      showToast('Subiendo imagen a Firebase Storage...', 'info');
+      const storageUrl = await uploadImageToFirebaseStorage(file, folder);
+      callback(storageUrl);
+      showToast('¡Imagen subida a Firebase Storage con éxito! Guarda cambios para aplicar.', 'success');
     } catch (err) {
-      console.error(err);
-      showToast('Error al procesar el archivo de imagen.', 'error');
+      console.error('Error al subir a Firebase Storage:', err);
+      showToast('Error al procesar y subir el archivo.', 'error');
+    } finally {
+      e.target.value = '';
     }
   };
 
@@ -191,6 +163,21 @@ export const StoreSettingsTab: React.FC = () => {
         cat.id === id ? { ...cat, enabled: !cat.enabled } : cat
       )
     }));
+  };
+
+  const handleCategoryMove = (index: number, direction: 'up' | 'down') => {
+    setFormData((prev) => {
+      const list = [...prev.categories];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return {
+        ...prev,
+        categories: list
+      };
+    });
   };
 
   const handleAddCategory = (e: React.FormEvent) => {
@@ -974,7 +961,7 @@ export const StoreSettingsTab: React.FC = () => {
 
             {/* Categories List */}
             <div className="space-y-4 pt-2">
-              {formData.categories.map((cat) => (
+              {formData.categories.map((cat, idx) => (
                 <div
                   key={cat.id}
                   className={`p-5 rounded-[4px] border space-y-4 transition-colors ${
@@ -985,7 +972,36 @@ export const StoreSettingsTab: React.FC = () => {
                 >
                   {/* Top Bar of Category Card */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#222] pb-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
+                      {/* Reorder Buttons */}
+                      <div className="flex flex-col gap-0.5 bg-[#1C1C1C] border border-[#2D2D2D] p-1 rounded-[2px]">
+                        <button
+                          type="button"
+                          onClick={() => handleCategoryMove(idx, 'up')}
+                          disabled={idx === 0}
+                          className="w-5 h-3.5 flex items-center justify-center text-[#AAA] hover:text-white disabled:opacity-20 disabled:cursor-not-allowed hover:bg-[#282828] rounded-[1px] transition-colors text-[9px] leading-none"
+                          title="Subir posición en catálogo"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCategoryMove(idx, 'down')}
+                          disabled={idx === formData.categories.length - 1}
+                          className="w-5 h-3.5 flex items-center justify-center text-[#AAA] hover:text-white disabled:opacity-20 disabled:cursor-not-allowed hover:bg-[#282828] rounded-[1px] transition-colors text-[9px] leading-none"
+                          title="Bajar posición en catálogo"
+                        >
+                          ▼
+                        </button>
+                      </div>
+
+                      <span
+                        className="w-6 h-6 rounded-[2px] bg-[#1E1E1E] border border-[#333] text-[#AAA] font-mono text-[11px] font-bold flex items-center justify-center shrink-0"
+                        title={`Posición #${idx + 1}`}
+                      >
+                        #{idx + 1}
+                      </span>
+
                       <button
                         type="button"
                         onClick={() => handleCategoryToggle(cat.id)}
@@ -1053,16 +1069,16 @@ export const StoreSettingsTab: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#222] hover:bg-[#333] border border-[#3A3A3A] text-white text-xs font-semibold rounded-[2px] cursor-pointer">
-                        <Upload className="w-3.5 h-3.5 text-[#C8102E]" />
-                        <span>Subir foto desde PC / Celular</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleFileUpload(e, (url) => handleCategoryFieldChange(cat.id, 'image', url))}
-                        />
-                      </label>
+                        <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#222] hover:bg-[#333] border border-[#3A3A3A] text-white text-xs font-semibold rounded-[2px] cursor-pointer">
+                          <Upload className="w-3.5 h-3.5 text-[#C8102E]" />
+                          <span>Subir foto a Firebase Storage</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(e, (url) => handleCategoryFieldChange(cat.id, 'image', url), 'categories')}
+                          />
+                        </label>
                     </div>
 
                     {/* Inputs */}

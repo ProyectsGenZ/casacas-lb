@@ -1,50 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Product, ProductCategory, OfferType, ProductOffer, ProductColor } from '../../types';
-import { X, Image as ImageIcon, Save, Plus, Trash2, Upload, Flame, Sparkles } from 'lucide-react';
+import { X, Image as ImageIcon, Save, Plus, Trash2, Upload, Flame, Sparkles, Loader2 } from 'lucide-react';
 import { useStoreSettings } from '../../context/StoreSettingsContext';
-
-const compressAndReadFile = (file: File, maxWidth = 640, maxHeight = 640): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const elem = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-        elem.width = width;
-        elem.height = height;
-        const ctx = elem.getContext('2d');
-        if (ctx) {
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(img, 0, 0, width, height);
-        }
-        let dataUrl = elem.toDataURL('image/jpeg', 0.72);
-        // If image exceeds ~90KB base64, apply efficient compression
-        if (dataUrl.length > 120000) {
-          dataUrl = elem.toDataURL('image/jpeg', 0.58);
-        }
-        resolve(dataUrl);
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
+import { uploadImageToFirebaseStorage } from '../../utils/firebaseStorage';
 
 const DEFAULT_CATEGORIES: string[] = ['Indumentaria', 'Accesorios', 'UV & vinilo', 'Banderas'];
 
@@ -106,6 +64,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   const [newColorName, setNewColorName] = useState('');
   const [newColorHex, setNewColorHex] = useState('#1C1C1C');
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
     if (initialProduct) {
@@ -253,25 +213,33 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const handleImageFileUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setIsUploadingImage(true);
     try {
-      const base64 = await compressAndReadFile(file);
-      handleImageUrlChange(index, base64);
+      const storageUrl = await uploadImageToFirebaseStorage(file, 'products');
+      handleImageUrlChange(index, storageUrl);
     } catch (err) {
-      console.error('Error al procesar imagen:', err);
+      console.error('Error al subir imagen a Storage:', err);
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
     }
   };
 
   const handleAddNewImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setIsUploadingImage(true);
     try {
-      const base64 = await compressAndReadFile(file);
+      const storageUrl = await uploadImageToFirebaseStorage(file, 'products');
       setFormData((prev) => ({
         ...prev,
-        images: [...prev.images.filter((img) => img.trim() !== ''), base64]
+        images: [...prev.images.filter((img) => img.trim() !== ''), storageUrl]
       }));
     } catch (err) {
-      console.error('Error al procesar imagen:', err);
+      console.error('Error al subir imagen a Storage:', err);
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
     }
   };
 
@@ -390,20 +358,47 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Category & Tag */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-bold uppercase tracking-wider text-[#C5C2BA] mb-1">
-                Categoría *
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as ProductCategory })}
-                className="w-full bg-[#1C1C1C] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-2.5 text-sm text-[#F8F7F4] focus:outline-none"
-              >
-                {availableCategories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-bold uppercase tracking-wider text-[#C5C2BA]">
+                  Categoría *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomCategory(!isCustomCategory)}
+                  className="text-[10px] text-[#C8102E] hover:underline font-bold uppercase cursor-pointer"
+                >
+                  {isCustomCategory ? 'Elegir de lista' : '+ Nueva categoría'}
+                </button>
+              </div>
+              {isCustomCategory ? (
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value as ProductCategory })}
+                  placeholder="Escribí el nombre de la categoría (ej: Camperas)"
+                  className="w-full bg-[#1C1C1C] border border-[#C8102E] focus:border-white rounded-[2px] px-3 py-2.5 text-sm text-[#F8F7F4] focus:outline-none"
+                  autoFocus
+                />
+              ) : (
+                <select
+                  value={formData.category}
+                  onChange={(e) => {
+                    if (e.target.value === '__NEW__') {
+                      setIsCustomCategory(true);
+                    } else {
+                      setFormData({ ...formData, category: e.target.value as ProductCategory });
+                    }
+                  }}
+                  className="w-full bg-[#1C1C1C] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-2.5 text-sm text-[#F8F7F4] focus:outline-none"
+                >
+                  {availableCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                  <option value="__NEW__">+ Crear otra categoría...</option>
+                </select>
+              )}
             </div>
 
             <div>
@@ -832,12 +827,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 Fotografías del Producto
               </label>
               <div className="flex items-center gap-3">
-                <label className="text-xs text-[#C8102E] hover:text-[#E01837] font-semibold flex items-center gap-1.5 cursor-pointer bg-[#C8102E]/10 hover:bg-[#C8102E]/20 px-2.5 py-1 rounded-[2px] transition-colors border border-[#C8102E]/30">
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Subir foto desde PC</span>
+                <label className={`text-xs font-semibold flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] transition-colors border ${
+                  isUploadingImage
+                    ? 'bg-[#C8102E]/20 text-[#FF8888] border-[#C8102E]/50 cursor-wait'
+                    : 'text-[#C8102E] hover:text-[#E01837] cursor-pointer bg-[#C8102E]/10 hover:bg-[#C8102E]/20 border-[#C8102E]/30'
+                }`}>
+                  {isUploadingImage ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="w-3.5 h-3.5" />
+                  )}
+                  <span>{isUploadingImage ? 'Subiendo a Storage...' : 'Subir foto a Firebase'}</span>
                   <input
                     type="file"
                     accept="image/*"
+                    disabled={isUploadingImage}
                     className="hidden"
                     onChange={handleAddNewImageUpload}
                   />
@@ -867,18 +871,27 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   required={i === 0}
                   value={imgUrl}
                   onChange={(e) => handleImageUrlChange(i, e.target.value)}
-                  placeholder="Pega enlace de imagen o presiona Subir foto"
+                  placeholder="Pega enlace de imagen o presiona Subir foto a Firebase"
                   className="flex-1 bg-[#1C1C1C] border border-[#333] focus:border-[#C8102E] rounded-[2px] px-3 py-2 text-xs text-[#F8F7F4] focus:outline-none"
                 />
                 <label
-                  className="px-2.5 py-2 bg-[#252525] hover:bg-[#333] border border-[#444] text-[#DDD] text-xs font-semibold rounded-[2px] cursor-pointer flex items-center gap-1.5 shrink-0"
-                  title="Subir foto desde PC o Celular"
+                  className={`px-2.5 py-2 border text-[#DDD] text-xs font-semibold rounded-[2px] flex items-center gap-1.5 shrink-0 ${
+                    isUploadingImage
+                      ? 'bg-[#1C1C1C] border-[#333] opacity-60 cursor-wait'
+                      : 'bg-[#252525] hover:bg-[#333] border-[#444] cursor-pointer'
+                  }`}
+                  title="Subir foto directamente a Firebase Storage"
                 >
-                  <Upload className="w-3.5 h-3.5 text-[#C8102E]" />
+                  {isUploadingImage ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C8102E]" />
+                  ) : (
+                    <Upload className="w-3.5 h-3.5 text-[#C8102E]" />
+                  )}
                   <span className="hidden sm:inline">Subir foto</span>
                   <input
                     type="file"
                     accept="image/*"
+                    disabled={isUploadingImage}
                     className="hidden"
                     onChange={(e) => handleImageFileUpload(i, e)}
                   />

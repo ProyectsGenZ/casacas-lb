@@ -348,18 +348,18 @@ export const Hero: React.FC = () => {
               <img
                 src={s.image}
                 alt={`${settings.brandName} - ${s.eyebrow}`}
-                className="w-full h-full object-cover object-center filter brightness-[0.62] contrast-[1.08] pointer-events-none select-none"
+                className="w-full h-full object-cover object-center filter brightness-[0.88] contrast-[1.03] pointer-events-none select-none"
                 draggable={false}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0E0E0E] via-[#0E0E0E]/40 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0E0E0E]/90 via-[#0E0E0E]/50 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0E0E0E]/80 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0E0E0E]/60 via-[#0E0E0E]/20 to-transparent pointer-events-none" />
             </div>
           ))}
         </div>
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-20 lg:py-28 flex flex-col justify-end min-h-[75vh]">
-          <div className="max-w-2xl space-y-6">
+          <div className="max-w-2xl space-y-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
             
             {/* Badges */}
             <div className="flex flex-wrap items-center gap-2.5">

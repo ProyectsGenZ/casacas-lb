@@ -25,6 +25,7 @@ interface ProductManagementContextType {
   moveProductOrder: (productId: string, direction: 'up' | 'down' | 'top') => void;
   reorderProducts: (orderedIds: string[]) => Promise<void>;
   resetToDefault: () => void;
+  restoreBackupProducts: (backupItems: Product[]) => Promise<void>;
   getProductById: (id: string) => Product | undefined;
 }
 
@@ -353,29 +354,29 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
   };
 
   const resetToDefault = () => {
-    const initialWithOrder = productsData.map((item, idx) => ({
-      ...item,
-      displayOrder: idx + 1
-    }));
+    // Desactivado permanentemente para proteger el catálogo real del usuario
+    console.warn('El restablecimiento de fábrica ha sido desactivado para proteger tus productos.');
+  };
 
-    setProducts(initialWithOrder);
-    safeSaveLocal(initialWithOrder);
+  const restoreBackupProducts = async (backupItems: Product[]): Promise<void> => {
+    setProducts(backupItems);
+    safeSaveLocal(backupItems);
 
     if (!IS_SANDBOX_ISOLATED) {
-      const batch = writeBatch(db);
-      for (const item of initialWithOrder) {
-        batch.set(doc(db, 'products', item.id), cleanForFirestore(item));
+      try {
+        const batch = writeBatch(db);
+        for (const item of backupItems) {
+          batch.set(doc(db, 'products', item.id), cleanForFirestore(item));
+        }
+        await batch.commit();
+        showToast(`Copia de seguridad restaurada (${backupItems.length} productos sincronizados con Firebase).`, 'success');
+      } catch (err: any) {
+        console.error('Error restaurando backup en Firestore:', err);
+        showToast(`Error al sincronizar con Firebase: ${err.message || 'Error de conexión'}`, 'error');
+        throw err;
       }
-      batch.commit()
-        .then(() => {
-          showToast('Catálogo restablecido a los valores oficiales en la nube.', 'info');
-        })
-        .catch((err: any) => {
-          console.error('Error restableciendo catálogo en Firestore:', err);
-          showToast(`Error al restablecer catálogo: ${err.message || 'Error de conexión'}`, 'error');
-        });
     } else {
-      showToast('[Experimental] Catálogo restablecido localmente a los originales.', 'info');
+      showToast(`Copia de seguridad restaurada localmente (${backupItems.length} productos).`, 'success');
     }
   };
 
@@ -394,6 +395,7 @@ export const ProductManagementProvider: React.FC<{ children: React.ReactNode }> 
         moveProductOrder,
         reorderProducts,
         resetToDefault,
+        restoreBackupProducts,
         getProductById
       }}
     >
